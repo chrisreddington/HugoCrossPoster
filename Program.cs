@@ -1,4 +1,6 @@
 ﻿using HugoCrossPoster.Services;
+using McMaster.Extensions.CommandLineUtils;
+using McMaster.Extensions.Hosting.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,22 +15,40 @@ namespace HugoCrossPoster
 {
     class Program
     {
-        static string title;
-        static List<string> tags;
-        static async Task Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
-        var builder = new HostBuilder()
-            .ConfigureServices((hostContext, services) =>
-            {
-                services.AddHttpClient();
-                services.AddTransient<IThirdPartyBlogService<MediumPoco>, MediumService>();
-                services.AddTransient<IThirdPartyBlogService<DevToPoco>, DevToService>();
-            }).UseConsoleLifetime();
+            return await new HostBuilder()
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddHttpClient();
+                    services.AddTransient<IThirdPartyBlogService<MediumPoco>, MediumService>();
+                    services.AddTransient<IThirdPartyBlogService<DevToPoco>, DevToService>();
+                }).UseConsoleLifetime()
+                .RunCommandLineApplicationAsync<Program>(args);
+        }
+            
 
-        var host = builder.Build();
+        [Option(ShortName = "u", Description = "Base URL of the website, not including protocol. e.g. www.cloudwithchris.com")]
+        public string baseUrl { get; } = "www.cloudwithchris.com";
 
-            string protocol = "https";
-            string baseUrl = "www.cloudwithchris.com";
+        [Option(ShortName = "p", Description = "Protocol used, either HTTP or HTTPS")]
+        public string protocol { get; } = "https";
+
+        
+
+        private IThirdPartyBlogService<MediumPoco> _mediumService;
+        private IThirdPartyBlogService<DevToPoco> _devToService;
+
+        public Program(IThirdPartyBlogService<MediumPoco> mediumService, IThirdPartyBlogService<DevToPoco> devToService)
+        {
+            _mediumService = mediumService;
+            _devToService = devToService;
+        }
+
+        async Task<int> OnExecute()
+        {
+            string title;
+            List<string> tags;
             string fileName = "contributing-to-a-hugo-theme.md";
             string sourceFile = await readFile(fileName);
 
@@ -47,8 +67,7 @@ namespace HugoCrossPoster
                 tags = await getTags(contentWithFrontMatter)
             };
 
-            var medium = host.Services.GetRequiredService<IThirdPartyBlogService<MediumPoco>>();
-            await medium.CreatePostAsync(mediumPayload, "", "");*/
+            await _mediumService.CreatePostAsync(mediumPayload, "", "");*/
 
             DevToPoco devToPayload = new DevToPoco(){
                 article = new Article(){
@@ -59,8 +78,9 @@ namespace HugoCrossPoster
                 }
             };
 
-            var devTo = host.Services.GetRequiredService<IThirdPartyBlogService<DevToPoco>>();
-            await devTo.CreatePostAsync(devToPayload, "", null);
+            await _devToService.CreatePostAsync(devToPayload, "", null);
+
+            return await Task.Run(() => 0);
         }
 
         static async Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName){
