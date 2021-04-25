@@ -49,31 +49,26 @@ namespace HugoCrossPoster
 
         async Task<int> OnExecute()
         {
-            string title;
-            List<string> tags;
             string fileName = "contributing-to-a-hugo-theme.md";
             string sourceFile = await _markdownService.readFile(fileName);
 
             string contentWithFrontMatter = await _markdownService.replaceLocalURLs(sourceFile, baseUrl);
             string contentWithoutFrontMatter = await _markdownService.removeFrontMatter(contentWithFrontMatter);
-            title = await _markdownService.getTitle(sourceFile);
-            tags = await _markdownService.getTags(sourceFile);
-
-            Console.WriteLine($"Title is {title}");
+        
             Console.WriteLine($"{contentWithoutFrontMatter}");
 
             /*MediumPoco mediumPayload = new MediumPoco(){
-                title = title,
+                title = await _markdownService.getTitle(sourceFile),
                 content = contentWithoutFrontMatter,
-                canonicalUrl = await getCanonicalUrl(protocol, baseUrl, fileName),
-                tags = await getTags(contentWithFrontMatter)
+                canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, fileName),
+                tags = await _markdownService.getTags(contentWithFrontMatter)
             };
 
             await _mediumService.CreatePostAsync(mediumPayload, "", "");*/
 
             DevToPoco devToPayload = new DevToPoco(){
                 article = new Article(){
-                    title = title,
+                    title = await _markdownService.getTitle(sourceFile),
                     body_markdown = contentWithoutFrontMatter,
                     canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, fileName),
                     tags = await _markdownService.getTags(contentWithFrontMatter, true)
