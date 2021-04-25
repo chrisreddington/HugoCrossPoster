@@ -8,6 +8,18 @@ namespace HugoCrossPoster.Services
 {
   public class ConvertFromMarkdownService : IConverter
     {
+        public async Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories){
+            IEnumerable<string> fileList = new List<string>();
+            try {
+                fileList = await Task.Run(() => System.IO.Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions(){
+                    RecurseSubdirectories = recursiveSubdirectories
+                }));
+            } catch(Exception ex) {
+                Console.WriteLine($"[Files] {ex.Message}");
+            }
+
+            return fileList;
+        }
       public async Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName)
       {
           string fileNamewithoutExtension = fileName.Replace(".md", "");
@@ -24,10 +36,20 @@ namespace HugoCrossPoster.Services
       {
           // Find the title frontmatter in the YAML
           string pattern = @"title: (?<title>.+)";
-          Match match = Regex.Match(fileContents, pattern);
+          Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
           // Return the value of the <title> matched group
           return await Task<string>.Run(() => match.Groups["title"].Value);
+      }
+
+      public async Task<string> getYoutube (string fileContents)
+      {
+          // Find the youtube frontmatter in the YAML
+          string pattern = @"youtube: (?<youtube>.+)";
+          Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
+
+          // Return the value of the <youtube> matched group
+          return await Task<string>.Run(() => match.Groups["youtube"].Value);
       }
 
       public async Task<List<string>> getTags (string fileContents, bool humanize = false)

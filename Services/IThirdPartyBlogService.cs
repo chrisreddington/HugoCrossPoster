@@ -4,6 +4,6 @@ namespace HugoCrossPoster.Services
 {
     public interface IThirdPartyBlogService<T>
     {
-        Task CreatePostAsync(T mediumPoco, string integrationToken, string authorId = null);
+        Task CreatePostAsync(T mediumPoco, string integrationToken, string authorId = null, string youtube = null);
     }
 }

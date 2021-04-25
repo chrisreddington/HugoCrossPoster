@@ -8,6 +8,8 @@ namespace HugoCrossPoster.Services
         Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName);
         Task<List<string>> getTags (string fileContents, bool humanize = false);
         Task<string> getTitle (string fileContents);
+        Task<string> getYoutube (string fileContents);
+        Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories);
         Task<string> readFile(string fileName);
         Task<string> removeFrontMatter(string fileContents);
         Task<string> replaceLocalURLs(string fileContents, string baseUrl);

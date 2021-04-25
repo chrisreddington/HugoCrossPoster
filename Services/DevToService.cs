@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -15,8 +16,13 @@ namespace HugoCrossPoster.Services
           _clientFactory = clientFactory;
       }
 
-      public async Task CreatePostAsync(DevToPoco articleObject, string integrationToken, string authorId = null)
+      public async Task CreatePostAsync(DevToPoco articleObject, string integrationToken, string authorId = null, string youtube = null)
       {
+        // If there is a youtube parameter, add it to the end of the content.
+        if (!String.IsNullOrEmpty(youtube)){
+          articleObject.article.body_markdown += $"\n\n{{% youtube {youtube} %}}";
+        }
+
         string uri = $"https://dev.to/api/articles";
         string json = JsonSerializer.Serialize<DevToPoco>(articleObject);
 

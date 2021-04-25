@@ -3,6 +3,8 @@ using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster
@@ -33,8 +35,14 @@ namespace HugoCrossPoster
         }
 
         
-        [Option(ShortName = "f", Description = "File path of the content to be converted and crossposted.")]
-        public string filePath { get; } 
+        [Option(ShortName = "f", Description = "Directory path of the content to be converted and crossposted.")]
+        public string directoryPath { get; } = "./testcases";
+
+        [Option(ShortName = "r", Description = "Boolean (True/False) on whether Recursive Subdirectories should be used for file access")]
+        public bool recursiveSubdirectories { get; } = false;
+
+        [Option(ShortName = "s", Description = "The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.")]
+        public string searchPattern { get; } = "*.md";
 
         [Option(ShortName = "u", Description = "Base URL of the website, not including protocol. e.g. www.cloudwithchris.com. This is used for converting any relative links to the original source, including the canonical URL.")]
         public string baseUrl { get; } = "www.cloudwithchris.com";
@@ -55,45 +63,57 @@ namespace HugoCrossPoster
 
         async Task<int> OnExecute()
         {
+            List<string> matchedFiles = (await _markdownService.listFiles(directoryPath, searchPattern, recursiveSubdirectories)).ToList();
+
+            List<Task> listOfTasks = new List<Task>();
+            for (int i = 0; i  < matchedFiles.Count(); i++)
+            {
+                listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i]));
+            }
+
+            await Task.WhenAll(listOfTasks);
+
+            return await Task.Run(() => 0);
+        }
+
+        async Task ConvertAndPostAsync(string filePath){
+            string canonicalPath = filePath.Replace($"{directoryPath}\\", "");
+            Console.WriteLine($"[Loop] Processing ${filePath}");
             string sourceFile = await _markdownService.readFile(filePath);
 
             string contentWithFrontMatter = await _markdownService.replaceLocalURLs(sourceFile, baseUrl);
-            string contentWithoutFrontMatter = await _markdownService.removeFrontMatter(contentWithFrontMatter);
-        
-            Console.WriteLine($"{contentWithoutFrontMatter}");
+            string contentWithoutFrontMatter = await _markdownService.removeFrontMatter(contentWithFrontMatter);            
 
             // If either the authorId or mediumToken are not completed, skip this step
             if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken))){
-                Console.WriteLine("[Medium] Crossposting...");
+                Console.WriteLine($"[Medium] Crossposting {filePath}...");
                 MediumPoco mediumPayload = new MediumPoco(){
                     title = await _markdownService.getTitle(sourceFile),
                     content = contentWithoutFrontMatter,
-                    canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, filePath),
+                    canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
                     tags = await _markdownService.getTags(contentWithFrontMatter)
                 };
-                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId);
-                Console.WriteLine("[Medium] Crosspost complete.");
+                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getYoutube(contentWithFrontMatter));
+                Console.WriteLine($"[Medium] Crossposting of {filePath} complete.");
             } else {
-                Console.WriteLine("[Medium] Missing required parameters to Crosspost. Skipping.");
+                Console.WriteLine($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
             }
 
             if (!String.IsNullOrEmpty(devtoToken)){
-                Console.WriteLine("[DevTo] Crossposting...");
+                Console.WriteLine($"[DevTo] Crossposting {filePath}...");
                 DevToPoco devToPayload = new DevToPoco(){
                     article = new Article(){
                         title = await _markdownService.getTitle(sourceFile),
                         body_markdown = contentWithoutFrontMatter,
-                        canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, filePath),
+                        canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
                         tags = await _markdownService.getTags(contentWithFrontMatter, true)
                     }
                 };
-                await _devToService.CreatePostAsync(devToPayload, devtoToken, null);
-                Console.WriteLine("[DevTo] Crosspost complete.");
+                await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getYoutube(contentWithFrontMatter));
+                Console.WriteLine($"[DevTo] Crosspost of {filePath} complete.");
             } else {
-                Console.WriteLine("[DevTo] Missing required parameter to Crosspost. Skipping.");
+                Console.WriteLine($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
             }
-
-            return await Task.Run(() => 0);
         }
     }
 }
