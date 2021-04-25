@@ -1,17 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Services
 {
-    public class ConvertFromMarkdownService : IConverter
+  public class ConvertFromMarkdownService : IConverter
     {
       public async Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName)
       {
