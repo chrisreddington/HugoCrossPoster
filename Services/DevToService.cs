@@ -26,7 +26,7 @@ namespace HugoCrossPoster.Services
         string uri = $"https://dev.to/api/articles";
         string json = JsonSerializer.Serialize<DevToPoco>(articleObject);
 
-        var client = _clientFactory.CreateClient();
+        var client = _clientFactory.CreateClient("devto");
         client.DefaultRequestHeaders.Add("api-key", $"{integrationToken}");
         var postResponse = await client.PostAsJsonAsync(uri, articleObject);
 

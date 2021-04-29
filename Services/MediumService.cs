@@ -18,6 +18,9 @@ namespace HugoCrossPoster.Services
 
       public async Task CreatePostAsync(MediumPoco mediumPoco, string integrationToken, string authorId, string youtube = null)
       {
+        //Prepend the title, as medium doesn't automatically add the title to the page.
+        mediumPoco.content = $"# {mediumPoco.title}{mediumPoco.content}";
+
         // If there is a youtube parameter, add it to the end of the content.
         if (!String.IsNullOrEmpty(youtube)){
           mediumPoco.content += $"\n\nhttps://youtu.be/{youtube}";

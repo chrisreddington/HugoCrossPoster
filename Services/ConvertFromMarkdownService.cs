@@ -52,7 +52,17 @@ namespace HugoCrossPoster.Services
           return await Task<string>.Run(() => match.Groups["youtube"].Value);
       }
 
-      public async Task<List<string>> getTags (string fileContents, bool humanize = false)
+      public async Task<string> getDescription (string fileContents)
+      {
+          // Find the youtube frontmatter in the YAML
+          string pattern = @"description: (?<description>.+)";
+          Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
+
+          // Return the value of the <youtube> matched group
+          return await Task<string>.Run(() => match.Groups["description"].Value);
+      }
+
+      public async Task<List<string>> getTags (string fileContents, int count = 10, bool humanize = false)
       {
           // Find the tags frontmatter in the YAML
           string pattern = @"tags:\n(?<tags>(\-\s[\w\s]+\n)*)";
@@ -68,7 +78,26 @@ namespace HugoCrossPoster.Services
           }
 
           //Delimit by the new line character
-          return temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+          return temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).Take(count).ToList();
+      }
+
+      public async Task<string> getSeries (string fileContents)
+      {
+          // Find the tags frontmatter in the YAML
+          string pattern = @"series:\n(?<series>(\-\s[\w\s]+\n)*)";
+          Match match = Regex.Match(fileContents, pattern);
+
+          //Remove the "- " from the string
+          var temp = await Task<string>.Run(() => match.Groups["series"].Value);
+          temp = temp.Replace("- ", "");
+
+            List<string> listOfSeries = temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            if (listOfSeries.Count() > 0){
+                return listOfSeries[0];
+            } else {
+                return "";
+            }
       }
 
       public async Task<string> replaceLocalURLs(string fileContents, string baseUrl)

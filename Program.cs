@@ -2,9 +2,12 @@
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Polly;
+using Polly.Extensions.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster
@@ -21,15 +24,30 @@ namespace HugoCrossPoster
             _devToService = devToService;
             _markdownService = markdownService;
         }
+        
+        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2,
+                                                                            retryAttempt)));
+        }
+
         public static async Task<int> Main(string[] args)
         {
             return await new HostBuilder()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHttpClient();
-                    services.AddTransient<IThirdPartyBlogService<MediumPoco>, MediumService>();
-                    services.AddTransient<IThirdPartyBlogService<DevToPoco>, DevToService>();
-                    services.AddTransient<IConverter, ConvertFromMarkdownService>();
+
+                    services.AddHttpClient("devto")
+                    .SetHandlerLifetime(TimeSpan.FromMinutes(10))  //Set lifetime to ten minutes
+                    .AddPolicyHandler(GetRetryPolicy());
+
+                    services.AddHttpClient()
+                    .AddTransient<IThirdPartyBlogService<MediumPoco>, MediumService>()
+                    .AddTransient<IThirdPartyBlogService<DevToPoco>, DevToService>()
+                    .AddTransient<IConverter, ConvertFromMarkdownService>();
                 }).UseConsoleLifetime()
                 .RunCommandLineApplicationAsync<Program>(args);
         }
@@ -106,7 +124,9 @@ namespace HugoCrossPoster
                         title = await _markdownService.getTitle(sourceFile),
                         body_markdown = contentWithoutFrontMatter,
                         canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                        tags = await _markdownService.getTags(contentWithFrontMatter, true)
+                        tags = await _markdownService.getTags(contentWithFrontMatter, 4, true),
+                        description = await _markdownService.getDescription(contentWithFrontMatter),
+                        series = await _markdownService.getSeries(contentWithFrontMatter)
                     }
                 };
                 await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getYoutube(contentWithFrontMatter));
