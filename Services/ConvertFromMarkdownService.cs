@@ -32,34 +32,34 @@ namespace HugoCrossPoster.Services
           return await System.IO.File.ReadAllTextAsync(fileName);
       }
 
-      public async Task<string> getTitle (string fileContents)
+      public async Task<string> getFrontmatterProperty (string fileContents, string key)
       {
-          // Find the title frontmatter in the YAML
-          string pattern = @"title: (?<title>.+)";
+          // Find the frontmatter with the Key 'key' in the YAML
+          string pattern = $@"{key}: ('?""?)*(?<{key}>[\w\-]+)('?""?)*";
           Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
-          // Return the value of the <title> matched group
-          return await Task<string>.Run(() => match.Groups["title"].Value);
+          // Return the value of the <key> matched group
+          return await Task<string>.Run(() => match.Groups[key].Value);
       }
 
-      public async Task<string> getYoutube (string fileContents)
+      
+      public async Task<List<string>> getFrontMatterPropertyList (string fileContents, string key, int count = 10, bool urlize = false)
       {
-          // Find the youtube frontmatter in the YAML
-          string pattern = @"youtube: (?<youtube>.+)";
+          // Find the frontmatter for the key in the YAML
+          string pattern = $@"{key}:[ ]?\n(?<{key}>(\-\s[\w\s]+\n)*)";
           Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
-          // Return the value of the <youtube> matched group
-          return await Task<string>.Run(() => match.Groups["youtube"].Value);
-      }
+          //Remove the "- " from the string
+          var temp = await Task<string>.Run(() => match.Groups[key].Value);
+          temp = temp.Replace("- ", "");
 
-      public async Task<string> getDescription (string fileContents)
-      {
-          // Find the youtube frontmatter in the YAML
-          string pattern = @"description: (?<description>.+)";
-          Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
+          if (urlize){
+              temp = temp.Replace(" ","");
+              temp = temp.ToLower();
+          }
 
-          // Return the value of the <youtube> matched group
-          return await Task<string>.Run(() => match.Groups["description"].Value);
+          //Delimit by the new line character
+          return temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).Take(count).ToList();
       }
 
       public async Task<List<string>> getTags (string fileContents, int count = 10, bool humanize = false)

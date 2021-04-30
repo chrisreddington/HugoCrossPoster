@@ -25,13 +25,18 @@ namespace HugoCrossPoster
             _markdownService = markdownService;
         }
         
-        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()
         {
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-                .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2,
-                                                                            retryAttempt)));
+                .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+                .WrapAsync(Policy.Handle<AggregateException>(x =>
+                        {
+                        var result = x.InnerException is HttpRequestException;
+                        return result;
+                        })
+                        .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)));
         }
 
         public static async Task<int> Main(string[] args)
@@ -42,7 +47,7 @@ namespace HugoCrossPoster
 
                     services.AddHttpClient("devto")
                     .SetHandlerLifetime(TimeSpan.FromMinutes(10))  //Set lifetime to ten minutes
-                    .AddPolicyHandler(GetRetryPolicy());
+                    .AddPolicyHandler(GetRetryPolicyAsync());
 
                     services.AddHttpClient()
                     .AddTransient<IThirdPartyBlogService<MediumPoco>, MediumService>()
@@ -106,12 +111,12 @@ namespace HugoCrossPoster
             if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken))){
                 Console.WriteLine($"[Medium] Crossposting {filePath}...");
                 MediumPoco mediumPayload = new MediumPoco(){
-                    title = await _markdownService.getTitle(sourceFile),
+                    title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
                     content = contentWithoutFrontMatter,
                     canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                    tags = await _markdownService.getTags(contentWithFrontMatter)
+                    tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags")
                 };
-                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getYoutube(contentWithFrontMatter));
+                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
                 Console.WriteLine($"[Medium] Crossposting of {filePath} complete.");
             } else {
                 Console.WriteLine($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
@@ -121,15 +126,15 @@ namespace HugoCrossPoster
                 Console.WriteLine($"[DevTo] Crossposting {filePath}...");
                 DevToPoco devToPayload = new DevToPoco(){
                     article = new Article(){
-                        title = await _markdownService.getTitle(sourceFile),
+                        title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
                         body_markdown = contentWithoutFrontMatter,
                         canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                        tags = await _markdownService.getTags(contentWithFrontMatter, 4, true),
-                        description = await _markdownService.getDescription(contentWithFrontMatter),
-                        series = await _markdownService.getSeries(contentWithFrontMatter)
+                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
+                        description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
+                        series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1))[0]
                     }
                 };
-                await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getYoutube(contentWithFrontMatter));
+                await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
                 Console.WriteLine($"[DevTo] Crosspost of {filePath} complete.");
             } else {
                 Console.WriteLine($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
