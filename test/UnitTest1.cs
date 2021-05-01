@@ -170,7 +170,7 @@ namespace HugoCrossPoster.Tests
         }
 
         [Fact]
-        public async void AsserLocalURLsWithForwardSlashAreChanged()
+        public async void AssertLocalURLsWithForwardSlashAreChanged()
         {
             // Arrange
             string exampleMarkdownContent = @"This is some content. [Here is a link](/blog/post).";
@@ -184,7 +184,7 @@ namespace HugoCrossPoster.Tests
         }
 
         [Fact]
-        public async void AsserLocalURLsWithoutForwardSlashAreChanged()
+        public async void AssertLocalURLsWithoutForwardSlashAreChanged()
         {
             // Arrange
             string exampleMarkdownContent = @"This is some content. [Here is a link](blog/post).";
@@ -195,6 +195,103 @@ namespace HugoCrossPoster.Tests
 
             // Assert
             Assert.Equal($"This is some content. [Here is a link]({baseURL}/blog/post).", value);
+        }
+
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFolderNonRecursive()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.md", false)).Count();
+
+            // Assert
+            Assert.Equal(15, numberOfFiles);
+        }
+        
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFolderNonRecursiveWithIncorrectFilter()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.txt", false)).Count();
+
+            // Assert
+            Assert.Equal(0, numberOfFiles);
+        }
+
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFolderRecursive()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.md", true)).Count();
+
+            // Assert
+            Assert.Equal(20, numberOfFiles);
+        }
+
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFolderRecursiveWithIncorrectFilter()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.txt", true)).Count();
+
+            // Assert
+            Assert.Equal(0, numberOfFiles);
+        }
+
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFileNonRecursive()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.md", false)).Count();
+
+            // Assert
+            Assert.Equal(1, numberOfFiles);
+        }
+
+        
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFileNonRecursiveMismatchPatternFileExtension()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.txt", false)).Count();
+
+            // Assert
+            Assert.Equal(1, numberOfFiles);
+        }
+
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFileRecursive()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.md", true)).Count();
+
+            // Assert
+            Assert.Equal(1, numberOfFiles);
+        }
+
+        [Fact]
+        public async void AssertNumberOfFilesReadFromTestCasesFileRecursiveMismatchPatternFileExtension()
+        {
+            // Arrange - Complete, as files are already in place in repo.
+
+            // Act
+            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.txt", true)).Count();
+
+            // Assert
+            Assert.Equal(1, numberOfFiles);
         }
     }
 }

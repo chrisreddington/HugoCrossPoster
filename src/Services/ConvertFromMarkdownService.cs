@@ -15,7 +15,13 @@ namespace HugoCrossPoster.Services
                     RecurseSubdirectories = recursiveSubdirectories
                 }));
             } catch(Exception ex) {
-                Console.WriteLine($"[Files] {ex.Message}");
+                if (ex.Message == "Not a directory")
+                {
+                  return fileList.Concat(new [] { directoryPath });
+
+                } else {
+                  Console.WriteLine($"[Files] {ex.Message}");
+                }
             }
 
             return fileList;
