@@ -137,7 +137,8 @@ namespace HugoCrossPoster
         /// The ConvertAndPostAsync is executed on an individual file. It reads the file, processes it by removing localURLs and pulling the required frontmatter out of the document. This is then added to an appropriate POCO, either for Medium or for DevTo. As a future exercise, could investigate making this POCO agnostic of the third party service.
         /// </summary>
          /// <param name="filePath">File Path of the file to be processed.</param>
-        async Task ConvertAndPostAsync(string filePath){
+        async Task ConvertAndPostAsync(string filePath)
+        {
             // Obtain the filename without the directoryPath, so that it can be used for the canonical URL details later on.
             string canonicalPath = filePath.Replace($"{directoryPath}\\", "");
             Console.WriteLine($"[Loop] Processing ${filePath}");
@@ -152,12 +153,14 @@ namespace HugoCrossPoster
             string contentWithoutFrontMatter = await _markdownService.removeFrontMatter(contentWithFrontMatter);            
 
             // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
-            if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken))){
+            if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
+            {
                 // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
                 Console.WriteLine($"[Medium] Crossposting {filePath}...");
 
                 // Initialise the MediumPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-                MediumPoco mediumPayload = new MediumPoco(){
+                MediumPoco mediumPayload = new MediumPoco()
+                {
                     title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
                     content = contentWithoutFrontMatter,
                     canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
@@ -171,13 +174,16 @@ namespace HugoCrossPoster
             }
 
             // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
-            if (!String.IsNullOrEmpty(devtoToken)){
+            if (!String.IsNullOrEmpty(devtoToken))
+            {
                 // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
                 Console.WriteLine($"[DevTo] Crossposting {filePath}...");
                 
                 // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-                DevToPoco devToPayload = new DevToPoco(){
-                    article = new Article(){
+                DevToPoco devToPayload = new DevToPoco()
+                {
+                    article = new Article()
+                    {
                         title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
                         body_markdown = contentWithoutFrontMatter,
                         canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),

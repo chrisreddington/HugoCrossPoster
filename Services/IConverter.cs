@@ -3,6 +3,12 @@ using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Services
 {
+    /// <summary>
+    /// Interface to provide consistency across Content Conversion implementations (e.g. markdown, HTML, etc.).
+    /// </summary>
+    /// <remarks>
+    /// Contains the required methods for any concrete content converter to be implemented. 
+    /// </remarks>
     public interface IConverter
     {
         Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName);
