@@ -13,12 +13,27 @@ namespace HugoCrossPoster.Tests
         private string exampleMarkdown = @"tags:
         - tag1
         - tag 2";
-        
+
         [Fact]
-        public async void AssertTagsWhenTagsPresent()
+        public async void AssertTagsLengthAndValuesCorrectWhenLowerThanCount()
         {
+
+            List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags");
             //Assert.Equal(2, (await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags")).Count());
-            Assert.Equal(2, (await markdownService.getTags(exampleMarkdown)).Count());
+            Assert.Equal(2, tags.Count());
+            Assert.Equal("tag1", tags[0]);
+            Assert.Equal("tag 2", tags[1]);
+        }
+
+
+        [Fact]
+        public async void AssertTagsLengthAndVAluesCorrectWhenCountLessThanTags()
+        {
+
+            List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags", 1);
+            //Assert.Equal(2, (await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags")).Count());
+            Assert.Single(tags);
+            Assert.Equal("tag1", tags[0]);
         }
     }
 }

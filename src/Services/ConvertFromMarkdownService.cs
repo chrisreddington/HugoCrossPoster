@@ -34,8 +34,9 @@ namespace HugoCrossPoster.Services
 
       public async Task<string> getFrontmatterProperty (string fileContents, string key)
       {
-          // Find the frontmatter with the Key 'key' in the YAML
-          string pattern = $@"{key}: ('?""?)*(?<{key}>[\w\-]+)('?""?)*";
+            // Find the frontmatter with the Key 'key' in the YAML
+            string pattern = $@"{key}:\s(?<{key}>[\-\s[\w\s]+\s?]*)";
+            //string pattern = $@"{key}: ('?""?)*(?<{key}>[\w\-]+)('?""?)*";
           Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
           // Return the value of the <key> matched group
@@ -46,8 +47,8 @@ namespace HugoCrossPoster.Services
       public async Task<List<string>> getFrontMatterPropertyList (string fileContents, string key, int count = 10, bool urlize = false)
       {
           // Find the frontmatter for the key in the YAML
-          string pattern = $@"{key}:\n(?<{key}>(\-\s[\w\s]+\n?)*)";
-          Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
+          string pattern = $@"{key}:\s(?<{key}>[\-\s[\w\s]+\s?]*)";
+            Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
           //Remove the "- " from the string
           var temp = await Task<string>.Run(() => match.Groups[key].Value);
@@ -58,49 +59,9 @@ namespace HugoCrossPoster.Services
               temp = temp.ToLower();
           }
 
-          //Delimit by the new line character
-          return temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).Take(count).ToList();
-      }
-
-      public async Task<List<string>> getTags (string fileContents, int count = 10, bool humanize = false)
-      {
-          // Find the tags frontmatter in the YAML
-          // should be this: tags:\n(?<tags>(\-\s[\w\s]*\n?)*)
-          string pattern = @"tags:\s(?<tags>[\-\s[\w\s]+\s?]*)";
-          Match match = Regex.Match(fileContents, pattern);
-
-          //Remove the "- " from the string
-          var temp = await Task<string>.Run(() => match.Groups["tags"].Value);
-          temp = temp.Replace("- ", "");
-
-          if (humanize){
-              temp = temp.Replace(" ","");
-              temp = temp.ToLower();
-          }
-
-          //Delimit by the new line character
-          return temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).Take(count).ToList();
-      }
-
-      public async Task<string> getSeries (string fileContents)
-      {
-          // Find the tags frontmatter in the YAML
-          string pattern = @"series:\n(?<series>(\-\s[\w\s]+\n)*)";
-          Match match = Regex.Match(fileContents, pattern);
-
-          //Remove the "- " from the string
-          var temp = await Task<string>.Run(() => match.Groups["series"].Value);
-          temp = temp.Replace("- ", "");
-
-            List<string> listOfSeries = temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            if (listOfSeries.Count() > 0){
-                return listOfSeries[0];
-            } else {
-                return "";
-            }
-      }
-
+        //Delimit by the new line character
+        return temp.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Take(count).ToList();
+    }
       public async Task<string> replaceLocalURLs(string fileContents, string baseUrl)
       {
           // Find any strings that match the []() syntax, and do not start with http. That means it's a 
