@@ -3,29 +3,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace HugoCrossPoster.Services
 {
   public class ConvertFromMarkdownService : IConverter
     {
-        public async Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories){
+        public async Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories) {
             IEnumerable<string> fileList = new List<string>();
-            try {
-                fileList = await Task.Run(() => System.IO.Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions(){
-                    RecurseSubdirectories = recursiveSubdirectories
-                }));
-            } catch(Exception ex) {
-                if (ex.Message == "Not a directory")
-                {
-                  return fileList.Concat(new [] { directoryPath });
 
-                } else {
-                  Console.WriteLine($"[Files] {ex.Message}");
+            try
+            {
+                fileList = await Task.Run(() => Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions() { RecurseSubdirectories = recursiveSubdirectories }));
+                // Run this next line to validate we received a string, otherwise we can catch the exception.
+                fileList.All(x => x is string);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("The parameter is incorrect."))
+                {
+                    return new List<String>() { directoryPath };
                 }
             }
 
             return fileList;
         }
+
       public async Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName)
       {
           string fileNamewithoutExtension = fileName.Replace(".md", "");

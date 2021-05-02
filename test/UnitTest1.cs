@@ -2,6 +2,7 @@ using Xunit;
 using HugoCrossPoster.Services;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 
 namespace HugoCrossPoster.Tests
 {
@@ -292,6 +293,48 @@ namespace HugoCrossPoster.Tests
 
             // Assert
             Assert.Equal(1, numberOfFiles);
+        }
+
+
+        [Fact]
+        public async void AssertReadFileCorrectlyReadsFile()
+        {
+            // Arrange
+            string exampleMarkdown1Contents = 
+            @"---
+            Author: chrisreddington
+            Description: ""Test 1""
+            - img/cloudwithchrislogo.png
+            TITLE: 'Test1'
+            youtube: okaSk5QxeJk
+            tags:
+            - azure
+            - cloud
+            - devops
+            - github
+            series:
+            - Cloud Drops
+
+            ---
+            # Hello
+            This is test 1";
+
+            string file = exampleMarkdown1Contents.Replace("\r\n", "\n").Replace("            ","");
+
+            // Act
+            string fileContents = await markdownService.readFile("../../../testcases/test1.md");
+
+            // Assert
+            Assert.Equal(file, fileContents);
+        }
+
+        [Fact]
+        public async void AssertThrowsExceptionOnNonExistingFile()
+        {
+            // Arrange - already done as file exists in git repo.
+
+            // Act & Assert
+            await Assert.ThrowsAsync<FileNotFoundException>(async () => await markdownService.readFile("../../../testcases/nonexistentfile.md"));
         }
     }
 }
