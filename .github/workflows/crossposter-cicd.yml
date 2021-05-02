@@ -43,7 +43,7 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
     - name: Test
-      run: dotnet test --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./.sonar/coverage/ /p:MergeWith=./.sonar/coverage/ --collect "Code coverage"'
+      run: dotnet test --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./.sonar/coverage/ /p:MergeWith=./.sonar/coverage/ --collect "Code coverage"
     - name: Build & Scan
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
