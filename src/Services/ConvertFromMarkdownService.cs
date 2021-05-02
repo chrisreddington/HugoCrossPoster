@@ -22,6 +22,14 @@ namespace HugoCrossPoster.Services
             {
                 if (ex.Message.Contains("The parameter is incorrect."))
                 {
+                    /*
+                    Looks like there is an implementation detail difference in Windows and Linux.
+                    As a result, only ever return an empty list in this scenario for now.
+                    */
+
+                    return new List<string>();
+
+                    /*
                     string searchPatternWithoutWildcard = searchPattern.Replace("*", "");
 
                     if (directoryPath.Contains(searchPatternWithoutWildcard))
@@ -29,7 +37,7 @@ namespace HugoCrossPoster.Services
                       return new List<String>() { directoryPath };
                     } else {
                       return new List<string>();
-                    }
+                    }*/
                 }
             }
 

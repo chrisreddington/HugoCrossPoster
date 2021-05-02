@@ -255,7 +255,7 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.md", false)).Count();
 
             // Assert
-            Assert.Equal(1, numberOfFiles);
+            Assert.Equal(0, numberOfFiles);
         }
 
         
@@ -280,7 +280,7 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.md", true)).Count();
 
             // Assert
-            Assert.Equal(1, numberOfFiles);
+            Assert.Equal(0, numberOfFiles);
         }
 
         [Fact]
