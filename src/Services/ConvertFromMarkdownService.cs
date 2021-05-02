@@ -10,7 +10,7 @@ namespace HugoCrossPoster.Services
   public class ConvertFromMarkdownService : IConverter
     {
         public async Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories) {
-            IEnumerable<string> fileList = null;
+            IEnumerable<string> fileList = new List<string>();
 
             try
             {
