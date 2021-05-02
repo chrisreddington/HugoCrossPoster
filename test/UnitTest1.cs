@@ -204,7 +204,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.md", false)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases", "*.md", false)).Count();
 
             // Assert
             Assert.Equal(15, numberOfFiles);
@@ -216,7 +216,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.txt", false)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases", "*.txt", false)).Count();
 
             // Assert
             Assert.Equal(0, numberOfFiles);
@@ -228,7 +228,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.md", true)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases", "*.md", true)).Count();
 
             // Assert
             Assert.Equal(20, numberOfFiles);
@@ -240,7 +240,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases", "*.txt", true)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases", "*.txt", true)).Count();
 
             // Assert
             Assert.Equal(0, numberOfFiles);
@@ -252,7 +252,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.md", false)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.md", false)).Count();
 
             // Assert
             Assert.Equal(1, numberOfFiles);
@@ -265,7 +265,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.txt", false)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.txt", false)).Count();
 
             // Assert
             Assert.Equal(1, numberOfFiles);
@@ -277,7 +277,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.md", true)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.md", true)).Count();
 
             // Assert
             Assert.Equal(1, numberOfFiles);
@@ -289,7 +289,7 @@ namespace HugoCrossPoster.Tests
             // Arrange - Complete, as files are already in place in repo.
 
             // Act
-            int numberOfFiles = (await markdownService.listFiles("../../../testcases/test1.md", "*.txt", true)).Count();
+            int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.txt", true)).Count();
 
             // Assert
             Assert.Equal(1, numberOfFiles);
@@ -322,7 +322,7 @@ namespace HugoCrossPoster.Tests
             string file = exampleMarkdown1Contents.Replace("\r\n", "\n").Replace("            ","");
 
             // Act
-            string fileContents = await markdownService.readFile("../../../testcases/test1.md");
+            string fileContents = await markdownService.readFile("./testcases/test1.md");
 
             // Assert
             Assert.Equal(file, fileContents);
@@ -334,7 +334,60 @@ namespace HugoCrossPoster.Tests
             // Arrange - already done as file exists in git repo.
 
             // Act & Assert
-            await Assert.ThrowsAsync<FileNotFoundException>(async () => await markdownService.readFile("../../../testcases/nonexistentfile.md"));
+            await Assert.ThrowsAsync<FileNotFoundException>(async () => await markdownService.readFile("./testcases/nonexistentfile.md"));
+        }
+
+        [Fact]
+        public async void AssertCorrectHTTPCanonicalURLForMainDirectory()
+        {
+            // Arrange - already done as file exists in git repo.
+            string expectedUrl = "http://www.cloudwithchris.com/testcases/test1";
+
+            // Act
+            string resultUrl = await markdownService.getCanonicalUrl("http", "www.cloudwithchris.com", "testcases/test1.md");
+
+            // Assert
+            Assert.Equal(expectedUrl, resultUrl);
+        }
+
+        [Fact]
+        public async void AssertCorrectHTTPSCanonicalURLForMainDirectory()
+        {
+            // Arrange - already done as file exists in git repo.
+            string expectedUrl = "https://www.cloudwithchris.com/testcases/test1";
+
+            // Act
+            string resultUrl = await markdownService.getCanonicalUrl("https", "www.cloudwithchris.com", "testcases/test1.md");
+
+            // Assert
+            Assert.Equal(expectedUrl, resultUrl);
+        }
+
+        [Fact]
+        public async void AssertCorrectHTTPCanonicalURLForMainDirectorySubfolder()
+        {
+            // Arrange - already done as file exists in git repo.
+            string expectedUrl = "http://www.cloudwithchris.com/testcases/subfolder/test5";
+
+            // Act
+            string resultUrl = await markdownService.getCanonicalUrl("http", "www.cloudwithchris.com", "testcases/subfolder/test5.md");
+
+            // Assert
+            Assert.Equal(expectedUrl, resultUrl);
+        }
+
+
+        [Fact]
+        public async void AssertCorrectHTTPSCanonicalURLForMainDirectorySubfolder()
+        {
+            // Arrange - already done as file exists in git repo.
+            string expectedUrl = "https://www.cloudwithchris.com/testcases/subfolder/test5";
+
+            // Act
+            string resultUrl = await markdownService.getCanonicalUrl("https", "www.cloudwithchris.com", "testcases/subfolder/test5.md");
+
+            // Assert
+            Assert.Equal(expectedUrl, resultUrl);
         }
     }
 }
