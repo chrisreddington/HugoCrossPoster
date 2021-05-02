@@ -42,9 +42,9 @@ jobs:
       run: dotnet restore
     - name: Build & Scan
       run: | 
-        .\.sonar\scanner\dotnet-sonarscanner begin /k:"chrisreddington_HugoCrossPoster" /o:"chrisreddington" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+        dotnet-sonarscanner begin /k:"chrisreddington_HugoCrossPoster" /o:"chrisreddington" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
         dotnet build --configuration Release --no-restore
-        .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
     - name: Test
       run: dotnet test --no-restore --verbosity normal      
     - name: SonarCloud Scan
