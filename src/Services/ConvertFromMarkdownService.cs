@@ -22,7 +22,14 @@ namespace HugoCrossPoster.Services
             {
                 if (ex.Message.Contains("The parameter is incorrect."))
                 {
-                    return new List<String>() { directoryPath };
+                    string searchPatternWithoutWildcard = searchPattern.Replace("*", "");
+
+                    if (directoryPath.Contains(searchPatternWithoutWildcard))
+                    {
+                      return new List<String>() { directoryPath };
+                    } else {
+                      return new List<string>();
+                    }
                 }
             }
 
