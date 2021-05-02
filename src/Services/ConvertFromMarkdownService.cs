@@ -98,7 +98,7 @@ namespace HugoCrossPoster.Services
           string replacement = "";
 
           // Replace the contents throughout the doc and return the result.
-          return await Task<string>.Run(() => Regex.Replace(fileContents, pattern, replacement)); 
+          return await Task<string>.Run(() => Regex.Replace(fileContents, pattern, replacement).Trim()); 
       }
 
     }

@@ -389,5 +389,40 @@ namespace HugoCrossPoster.Tests
             // Assert
             Assert.Equal(expectedUrl, resultUrl);
         }
+
+
+        [Fact]
+        public async void AssertRemoveFrontMatterRemovesDetailsCorrectly()
+        {
+            // Arrange
+            string exampleMarkdown1Contents =
+            @"---
+            Author: chrisreddington
+            Description: ""Test 1""
+            - img/cloudwithchrislogo.png
+            TITLE: 'Test1'
+            youtube: okaSk5QxeJk
+            tags:
+            - azure
+            - cloud
+            - devops
+            - github
+            series:
+            - Cloud Drops
+
+            ---
+            # Hello
+            This is test 1";
+
+            string expectedResult =
+            @"# Hello
+            This is test 1";
+
+            // Act
+            string fileContents = await markdownService.removeFrontMatter(exampleMarkdown1Contents);
+
+            // Assert
+            Assert.Equal(expectedResult, fileContents);
+        }
     }
 }
