@@ -3,6 +3,7 @@ using HugoCrossPoster.Services;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Tests
 {
@@ -15,7 +16,7 @@ namespace HugoCrossPoster.Tests
         - tag 2";
 
         [Fact]
-        public async void AssertTagsLengthAndValuesAreCorrectWhenCountOfTagsIsLowerThanTakeValue()
+        public async Task AssertTagsLengthAndValuesAreCorrectWhenCountOfTagsIsLowerThanTakeValue()
         {
             // Arrange is carried out already
 
@@ -23,13 +24,13 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags");
 
             // Assert
-            Assert.Equal(2, tags.Count());
-            Assert.Equal("tag1", tags[0]);
-            Assert.Equal("tag 2", tags[1]);
+            await Task.Run(() => Assert.Equal(2, tags.Count));
+            await Task.Run(() => Assert.Equal("tag1", tags[0]));
+            await Task.Run(() => Assert.Equal("tag 2", tags[1]));
         }
 
         [Fact]
-        public async void AssertTagsLengthAndValuesAreCorrectWhenCountIsLessThanTags()
+        public async Task AssertTagsLengthAndValuesAreCorrectWhenCountIsLessThanTags()
         {
             // Arrange is carried out already
 
@@ -37,12 +38,12 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags", 1);
 
             // Assert
-            Assert.Single(tags);
-            Assert.Equal("tag1", tags[0]);
+            await Task.Run(() => Assert.Single(tags));
+            await Task.Run(() => Assert.Equal("tag1", tags[0]));
         }
 
         [Fact]
-        public async void AssertRegexWorksWhenThereAreSpacesAfterPropertyName()
+        public async Task AssertRegexWorksWhenThereAreSpacesAfterPropertyName()
         {
             // Arrange
             string exampleMarkdownWithSpace = @"key: 
@@ -53,13 +54,13 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownWithSpace, "key");
 
             // Assert
-            Assert.Equal(2, tags.Count());
-            Assert.Equal("tag1", tags[0]);
-            Assert.Equal("tag 2", tags[1]);
+            await Task.Run(() => Assert.Equal(2, tags.Count));
+            await Task.Run(() => Assert.Equal("tag1", tags[0]));
+            await Task.Run(() => Assert.Equal("tag 2", tags[1]));
         }
 
         [Fact]
-        public async void AssertRegExWorksWhenThereAreSpecialSymbolsInName()
+        public async Task AssertRegExWorksWhenThereAreSpecialSymbolsInName()
         {
             // Arrange
             string exampleMarkdownWithSymbols = @"key: 
@@ -70,13 +71,13 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownWithSymbols, "key");
 
             // Assert
-            Assert.Equal(2, tags.Count());
-            Assert.Equal("cloudwithchris.com", tags[0]);
-            Assert.Equal("hybrid-cloud", tags[1]);
+            await Task.Run(() => Assert.Equal(2, tags.Count));
+            await Task.Run(() => Assert.Equal("cloudwithchris.com", tags[0]));
+            await Task.Run(() => Assert.Equal("hybrid-cloud", tags[1]));
         }
 
         [Fact]
-        public async void AssertRegExCorrectlyIdentifiesDanglingKey()
+        public async Task AssertRegExCorrectlyIdentifiesDanglingKey()
         {
             // Arrange
             string exampleMarkdownWithNoValuesInList = @"key:
@@ -86,11 +87,11 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownWithNoValuesInList, "key");
 
             // Assert
-            Assert.Empty(tags);
+            await Task.Run(() => Assert.Empty(tags));
         }
 
         [Fact]
-        public async void AssertRegExDoesntPickUpStringListOfValues()
+        public async Task AssertRegExDoesntPickUpStringListOfValues()
         {
             // Arrange
             string exampleMarkdownList = @"key: one, two, three, four";
@@ -99,11 +100,11 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownList, "key");
 
             // Assert
-            Assert.Empty(tags);
+            await Task.Run(() => Assert.Empty(tags));
         }
 
         [Fact]
-        public async void AssetFrontMatterKeyValueIsInsenstiveInGetFrontMatterPropertyList()
+        public async Task AssetFrontMatterKeyValueIsInsenstiveInGetFrontMatterPropertyList()
         {
             // Arrange
             string exampleMarkdownList = @"KeY: one, two, three, four";
@@ -112,11 +113,11 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownList, "key");
 
             // Assert
-            Assert.Empty(tags);
+            await Task.Run(() => Assert.Empty(tags));
         }
 
         [Fact]
-        public async void AssetFrontMatterKeyValueIsInsenstiveInGetFrontMatterProperty()
+        public async Task AssetFrontMatterKeyValueIsInsenstiveInGetFrontMatterProperty()
         {
             // Arrange
             string exampleMarkdownList = @"Title: My Cool Blog Title";
@@ -125,11 +126,11 @@ namespace HugoCrossPoster.Tests
             string value = await markdownService.getFrontmatterProperty(exampleMarkdownList, "title");
 
             // Assert
-            Assert.Equal("My Cool Blog Title", value);
+            await Task.Run(() => Assert.Equal("My Cool Blog Title", value));
         }
 
         [Fact]
-        public async void AssertRegExDisplaysPropertyValueCorrectly()
+        public async Task AssertRegExDisplaysPropertyValueCorrectly()
         {
             // Arrange
             string exampleMarkdownList = @"title: My Cool Blog Title";
@@ -138,11 +139,11 @@ namespace HugoCrossPoster.Tests
             string value = await markdownService.getFrontmatterProperty(exampleMarkdownList, "title");
 
             // Assert
-            Assert.Equal("My Cool Blog Title", value);
+            await Task.Run(() => Assert.Equal("My Cool Blog Title", value));
         }
 
         [Fact]
-        public async void AssertHttpsURLsAreNotChanged()
+        public async Task AssertHttpsURLsAreNotChanged()
         {
             // Arrange
             string exampleMarkdownContent = @"This is some content. [Here is a link](https://www.google.com).";
@@ -152,12 +153,12 @@ namespace HugoCrossPoster.Tests
             string value = await markdownService.replaceLocalURLs(exampleMarkdownContent, baseURL);
 
             // Assert
-            Assert.Equal("This is some content. [Here is a link](https://www.google.com).", value);
+            await Task.Run(() => Assert.Equal("This is some content. [Here is a link](https://www.google.com).", value));
         }
 
 
         [Fact]
-        public async void AssertHttpURLsAreNotChanged()
+        public async Task AssertHttpURLsAreNotChanged()
         {
             // Arrange
             string exampleMarkdownContent = @"This is some content. [Here is a link](http://www.google.com).";
@@ -167,11 +168,11 @@ namespace HugoCrossPoster.Tests
             string value = await markdownService.replaceLocalURLs(exampleMarkdownContent, baseURL);
 
             // Assert
-            Assert.Equal("This is some content. [Here is a link](http://www.google.com).", value);
+            await Task.Run(() => Assert.Equal("This is some content. [Here is a link](http://www.google.com).", value));
         }
 
         [Fact]
-        public async void AssertLocalURLsWithForwardSlashAreChanged()
+        public async Task AssertLocalURLsWithForwardSlashAreChanged()
         {
             // Arrange
             string exampleMarkdownContent = @"This is some content. [Here is a link](/blog/post).";
@@ -181,11 +182,11 @@ namespace HugoCrossPoster.Tests
             string value = await markdownService.replaceLocalURLs(exampleMarkdownContent, baseURL);
 
             // Assert
-            Assert.Equal($"This is some content. [Here is a link]({baseURL}/blog/post).", value);
+            await Task.Run(() => Assert.Equal($"This is some content. [Here is a link]({baseURL}/blog/post).", value));
         }
 
         [Fact]
-        public async void AssertLocalURLsWithoutForwardSlashAreChanged()
+        public async Task AssertLocalURLsWithoutForwardSlashAreChanged()
         {
             // Arrange
             string exampleMarkdownContent = @"This is some content. [Here is a link](blog/post).";
@@ -195,11 +196,11 @@ namespace HugoCrossPoster.Tests
             string value = await markdownService.replaceLocalURLs(exampleMarkdownContent, baseURL);
 
             // Assert
-            Assert.Equal($"This is some content. [Here is a link]({baseURL}/blog/post).", value);
+            await Task.Run(() => Assert.Equal($"This is some content. [Here is a link]({baseURL}/blog/post).", value));
         }
 
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFolderNonRecursive()
+        public async Task AssertNumberOfFilesReadFromTestCasesFolderNonRecursive()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -207,11 +208,11 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases", "*.md", false)).Count();
 
             // Assert
-            Assert.Equal(15, numberOfFiles);
+            await Task.Run(() => Assert.Equal(15, numberOfFiles));
         }
         
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFolderNonRecursiveWithIncorrectFilter()
+        public async Task AssertNumberOfFilesReadFromTestCasesFolderNonRecursiveWithIncorrectFilter()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -219,11 +220,11 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases", "*.txt", false)).Count();
 
             // Assert
-            Assert.Equal(0, numberOfFiles);
+            await Task.Run(() => Assert.Equal(0, numberOfFiles));
         }
 
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFolderRecursive()
+        public async Task AssertNumberOfFilesReadFromTestCasesFolderRecursive()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -231,11 +232,11 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases", "*.md", true)).Count();
 
             // Assert
-            Assert.Equal(20, numberOfFiles);
+            await Task.Run(() => Assert.Equal(20, numberOfFiles));
         }
 
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFolderRecursiveWithIncorrectFilter()
+        public async Task AssertNumberOfFilesReadFromTestCasesFolderRecursiveWithIncorrectFilter()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -243,11 +244,11 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases", "*.txt", true)).Count();
 
             // Assert
-            Assert.Equal(0, numberOfFiles);
+            await Task.Run(() => Assert.Equal(0, numberOfFiles));
         }
 
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFileNonRecursive()
+        public async Task AssertNumberOfFilesReadFromTestCasesFileNonRecursive()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -255,12 +256,12 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.md", false)).Count();
 
             // Assert
-            Assert.Equal(0, numberOfFiles);
+            await Task.Run(() => Assert.Equal(0, numberOfFiles));
         }
 
         
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFileNonRecursiveMismatchPatternFileExtension()
+        public async Task AssertNumberOfFilesReadFromTestCasesFileNonRecursiveMismatchPatternFileExtension()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -268,11 +269,11 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.txt", false)).Count();
 
             // Assert
-            Assert.Equal(0, numberOfFiles);
+            await Task.Run(() => Assert.Equal(0, numberOfFiles));
         }
 
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFileRecursive()
+        public async Task AssertNumberOfFilesReadFromTestCasesFileRecursive()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -280,11 +281,11 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.md", true)).Count();
 
             // Assert
-            Assert.Equal(0, numberOfFiles);
+            await Task.Run(() => Assert.Equal(0, numberOfFiles));
         }
 
         [Fact]
-        public async void AssertNumberOfFilesReadFromTestCasesFileRecursiveMismatchPatternFileExtension()
+        public async Task AssertNumberOfFilesReadFromTestCasesFileRecursiveMismatchPatternFileExtension()
         {
             // Arrange - Complete, as files are already in place in repo.
 
@@ -292,12 +293,12 @@ namespace HugoCrossPoster.Tests
             int numberOfFiles = (await markdownService.listFiles("./testcases/test1.md", "*.txt", true)).Count();
 
             // Assert
-            Assert.Equal(0, numberOfFiles);
+            await Task.Run(() => Assert.Equal(0, numberOfFiles));
         }
 
 
         [Fact]
-        public async void AssertReadFileCorrectlyReadsFile()
+        public async Task AssertReadFileCorrectlyReadsFile()
         {
             // Arrange
             string exampleMarkdown1Contents = 
@@ -325,11 +326,11 @@ namespace HugoCrossPoster.Tests
             string fileContents = await markdownService.readFile("./testcases/test1.md");
 
             // Assert
-            Assert.Equal(file, fileContents);
+            await Task.Run(() => Assert.Equal(file, fileContents));
         }
 
         [Fact]
-        public async void AssertThrowsExceptionOnNonExistingFile()
+        public async Task AssertThrowsExceptionOnNonExistingFile()
         {
             // Arrange - already done as file exists in git repo.
 
@@ -338,7 +339,7 @@ namespace HugoCrossPoster.Tests
         }
 
         [Fact]
-        public async void AssertCorrectHTTPCanonicalURLForMainDirectory()
+        public async Task AssertCorrectHTTPCanonicalURLForMainDirectory()
         {
             // Arrange - already done as file exists in git repo.
             string expectedUrl = "http://www.cloudwithchris.com/testcases/test1";
@@ -347,11 +348,11 @@ namespace HugoCrossPoster.Tests
             string resultUrl = await markdownService.getCanonicalUrl("http", "www.cloudwithchris.com", "testcases/test1.md");
 
             // Assert
-            Assert.Equal(expectedUrl, resultUrl);
+            await Task.Run(() => Assert.Equal(expectedUrl, resultUrl));
         }
 
         [Fact]
-        public async void AssertCorrectHTTPSCanonicalURLForMainDirectory()
+        public async Task AssertCorrectHTTPSCanonicalURLForMainDirectory()
         {
             // Arrange - already done as file exists in git repo.
             string expectedUrl = "https://www.cloudwithchris.com/testcases/test1";
@@ -360,11 +361,11 @@ namespace HugoCrossPoster.Tests
             string resultUrl = await markdownService.getCanonicalUrl("https", "www.cloudwithchris.com", "testcases/test1.md");
 
             // Assert
-            Assert.Equal(expectedUrl, resultUrl);
+            await Task.Run(() => Assert.Equal(expectedUrl, resultUrl));
         }
 
         [Fact]
-        public async void AssertCorrectHTTPCanonicalURLForMainDirectorySubfolder()
+        public async Task AssertCorrectHTTPCanonicalURLForMainDirectorySubfolder()
         {
             // Arrange - already done as file exists in git repo.
             string expectedUrl = "http://www.cloudwithchris.com/testcases/subfolder/test5";
@@ -373,12 +374,12 @@ namespace HugoCrossPoster.Tests
             string resultUrl = await markdownService.getCanonicalUrl("http", "www.cloudwithchris.com", "testcases/subfolder/test5.md");
 
             // Assert
-            Assert.Equal(expectedUrl, resultUrl);
+            await Task.Run(() => Assert.Equal(expectedUrl, resultUrl));
         }
 
 
         [Fact]
-        public async void AssertCorrectHTTPSCanonicalURLForMainDirectorySubfolder()
+        public async Task AssertCorrectHTTPSCanonicalURLForMainDirectorySubfolder()
         {
             // Arrange - already done as file exists in git repo.
             string expectedUrl = "https://www.cloudwithchris.com/testcases/subfolder/test5";
@@ -387,12 +388,12 @@ namespace HugoCrossPoster.Tests
             string resultUrl = await markdownService.getCanonicalUrl("https", "www.cloudwithchris.com", "testcases/subfolder/test5.md");
 
             // Assert
-            Assert.Equal(expectedUrl, resultUrl);
+            await Task.Run(() => Assert.Equal(expectedUrl, resultUrl));
         }
 
 
         [Fact]
-        public async void AssertRemoveFrontMatterRemovesDetailsCorrectly()
+        public async Task AssertRemoveFrontMatterRemovesDetailsCorrectly()
         {
             // Arrange
             string exampleMarkdown1Contents =
@@ -422,7 +423,7 @@ namespace HugoCrossPoster.Tests
             string fileContents = await markdownService.removeFrontMatter(exampleMarkdown1Contents);
 
             // Assert
-            Assert.Equal(expectedResult, fileContents);
+            await Task.Run(() => Assert.Equal(expectedResult, fileContents));
         }
     }
 }

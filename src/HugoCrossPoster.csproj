@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <ProjectGuid>{27d8b28e-24c5-4897-b0d5-a51e0822d323}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>HugoCrossPoster</RootNamespace>
