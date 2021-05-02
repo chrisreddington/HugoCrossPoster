@@ -14,7 +14,7 @@ namespace HugoCrossPoster.Services
 
             try
             {
-                fileList.Concat(await Task.Run(() => Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions() { RecurseSubdirectories = recursiveSubdirectories })));
+                fileList = await Task.Run(() => Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions() { RecurseSubdirectories = recursiveSubdirectories }));
                 // Run this next line to validate we received a string, otherwise we can catch the exception.
                 var allStrings = fileList.All(x => x != null);
                 Console.WriteLine(allStrings.ToString());
