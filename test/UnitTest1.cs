@@ -24,7 +24,7 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdown, "tags");
 
             // Assert
-            await Task.Run(() => Assert.Equal(2, tags.Count()));
+            await Task.Run(() => Assert.Equal(2, tags.Count));
             await Task.Run(() => Assert.Equal("tag1", tags[0]));
             await Task.Run(() => Assert.Equal("tag 2", tags[1]));
         }
@@ -54,7 +54,7 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownWithSpace, "key");
 
             // Assert
-            await Task.Run(() => Assert.Equal(2, tags.Count()));
+            await Task.Run(() => Assert.Equal(2, tags.Count));
             await Task.Run(() => Assert.Equal("tag1", tags[0]));
             await Task.Run(() => Assert.Equal("tag 2", tags[1]));
         }
@@ -71,7 +71,7 @@ namespace HugoCrossPoster.Tests
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownWithSymbols, "key");
 
             // Assert
-            await Task.Run(() => Assert.Equal(2, tags.Count()));
+            await Task.Run(() => Assert.Equal(2, tags.Count));
             await Task.Run(() => Assert.Equal("cloudwithchris.com", tags[0]));
             await Task.Run(() => Assert.Equal("hybrid-cloud", tags[1]));
         }
