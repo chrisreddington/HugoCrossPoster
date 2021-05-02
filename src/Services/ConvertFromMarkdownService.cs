@@ -10,13 +10,13 @@ namespace HugoCrossPoster.Services
   public class ConvertFromMarkdownService : IConverter
     {
         public async Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories) {
-            IEnumerable<string> fileList = new List<string>();
+            IEnumerable<string> fileList = null;
 
             try
             {
                 fileList = await Task.Run(() => Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions() { RecurseSubdirectories = recursiveSubdirectories }));
                 // Run this next line to validate we received a string, otherwise we can catch the exception.
-                var allStrings = fileList.All(x => x is string);
+                var allStrings = fileList.All(x => x != null);
                 Console.WriteLine(allStrings.ToString());
             }
             catch (Exception ex)
@@ -47,7 +47,7 @@ namespace HugoCrossPoster.Services
 
       public async Task<string> getCanonicalUrl(string protocol, string baseUrl, string fileName)
       {
-          string fileNamewithoutExtension = fileName.Replace(".md", "");
+          string fileNamewithoutExtension = await Task.Run<string>(() => fileName.Replace(".md", ""));
           return new UriBuilder(protocol, baseUrl, -1, fileNamewithoutExtension).ToString();
       }
 

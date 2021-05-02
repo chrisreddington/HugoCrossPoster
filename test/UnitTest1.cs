@@ -10,8 +10,8 @@ namespace HugoCrossPoster.Tests
     public class ConvertFromMarkdownServiceTests
     {
 
-        private ConvertFromMarkdownService markdownService = new ConvertFromMarkdownService();
-        private string exampleMarkdown = @"tags:
+        private readonly ConvertFromMarkdownService markdownService = new ConvertFromMarkdownService();
+        private readonly string exampleMarkdown = @"tags:
         - tag1
         - tag 2";
 

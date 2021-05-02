@@ -8,8 +8,8 @@ namespace HugoCrossPoster.Services
     /// <remarks>
     /// Contains the required methods for any concrete third party blog service to be implemented. 
     /// </remarks>
-    public interface IThirdPartyBlogService<T>
+    public interface IThirdPartyBlogService<in T>
     {
-        Task CreatePostAsync(T mediumPoco, string integrationToken, string authorId = null, string youtube = null);
+        Task CreatePostAsync(T articleObject, string integrationToken, string authorId = null, string youtube = null);
     }
 }

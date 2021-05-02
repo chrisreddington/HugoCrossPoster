@@ -23,11 +23,11 @@ namespace HugoCrossPoster
   class Program
     {
         /// <value>Instance of the Medium Service to be used throughout the program execution.</value>
-        private IThirdPartyBlogService<MediumPoco> _mediumService;
+        private readonly IThirdPartyBlogService<MediumPoco> _mediumService;
         /// <value>Instance of the DevTo Service to be used throughout the program execution.</value>
-        private IThirdPartyBlogService<DevToPoco> _devToService;
+        private readonly IThirdPartyBlogService<DevToPoco> _devToService;
         /// <value>Instance of the Markdown Converter Service to be used throughout the program execution.</value>
-        private IConverter _markdownService;
+        private readonly IConverter _markdownService;
 
         /// <summary>
         /// The main Program class' constructor.
@@ -123,7 +123,7 @@ namespace HugoCrossPoster
             List<string> matchedFiles = (await _markdownService.listFiles(directoryPath, searchPattern, recursiveSubdirectories)).ToList();
 
             List<Task> listOfTasks = new List<Task>();
-            for (int i = 0; i  < matchedFiles.Count(); i++)
+            for (int i = 0; i  < matchedFiles.Count; i++)
             {
                 listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i]));
             }

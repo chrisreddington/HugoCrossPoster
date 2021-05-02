@@ -36,15 +36,15 @@ namespace HugoCrossPoster.Services
       /// <param name="integrationToken">Integration Token which is used to authorize to the medium.com api. A user can obtain this through their user settings on dev.to.</param>
       /// <param name="authorId">This is required for the medium.com service. Tjhe authorId forms part of the Uri where the articleObject should be POSTed.</param>
       /// <param name="youtube">This is an optional parameter, representing a YouTube Video ID. If the article was originally a YouTube video (e.g.a podcast episode with a video on YouTube), then this should be populated. This is used to automatically append the appropriate liquid tag to the Dev.To article with the YouTube video ID.</param>      
-      public async Task CreatePostAsync(MediumPoco mediumPoco, string integrationToken, string authorId, string youtube = null)
+      public async Task CreatePostAsync(MediumPoco articleObject, string integrationToken, string authorId = null, string youtube = null)
       {
         //Prepend the title, as medium doesn't automatically add the title to the page.
-        mediumPoco.content = $"# {mediumPoco.title}{mediumPoco.content}";
+        articleObject.content = $"# {articleObject.title}{articleObject.content}";
 
         // If there is a youtube parameter, add it to the end of the content.
         if (!String.IsNullOrEmpty(youtube))
         {
-          mediumPoco.content += $"\n\nhttps://youtu.be/{youtube}";
+          articleObject.content += $"\n\nhttps://youtu.be/{youtube}";
         }
 
         // Define the dev.to API URI, where we will be sending the articles.
@@ -59,7 +59,7 @@ namespace HugoCrossPoster.Services
 
         // Post the article object to the medium.com API by serializing the object to JSON.
         // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
-        var postResponse = await client.PostAsJsonAsync(uri, mediumPoco);
+        var postResponse = await client.PostAsJsonAsync(uri, articleObject);
         postResponse.EnsureSuccessStatusCode();
       }
     }
