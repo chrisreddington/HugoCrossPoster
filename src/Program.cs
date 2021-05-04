@@ -2,6 +2,7 @@
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Extensions.Http;
 using System;
@@ -28,19 +29,23 @@ namespace HugoCrossPoster
         private readonly IThirdPartyBlogService<DevToPoco> _devToService;
         /// <value>Instance of the Markdown Converter Service to be used throughout the program execution.</value>
         private readonly IConverter _markdownService;
+        /// <value>Instance of the logger to be used throughout the program execution.</value>
+        private readonly ILogger<Program> _logger;
 
         /// <summary>
         /// The main Program class' constructor.
         /// This is used as part of the .NET Dependency Injection functionality, binding the interfaces to concrete types from the startup class.
         /// </summary>.
-         /// <param name="mediumService">Instance of the Medium Service being passed in during the Program's Startup</param>
-         /// <param name="devtoService">Instance of the DevTo Service being passed in during the Program's Startup</param>
-         /// <param name="markdownService">Instance of the Markdown Converter Service being passed in during the Program's Startup</param>
-        public Program(IThirdPartyBlogService<MediumPoco> mediumService, IThirdPartyBlogService<DevToPoco> devToService, IConverter markdownService)
+        /// <param name="mediumService">Instance of the Medium Service being passed in during the Program's Startup</param>
+        /// <param name="devtoService">Instance of the DevTo Service being passed in during the Program's Startup</param>
+        /// <param name="markdownService">Instance of the Markdown Converter Service being passed in during the Program's Startup</param>
+        /// <param name="logger">Instance of the logger being passed in during the Program's Startup</param>
+        public Program(IThirdPartyBlogService<MediumPoco> mediumService, IThirdPartyBlogService<DevToPoco> devToService, IConverter markdownService, ILogger<Program> logger)
         {
             _mediumService = mediumService;
             _devToService = devToService;
             _markdownService = markdownService;
+            _logger = logger;
         }
         
         /// <summary>
@@ -75,6 +80,7 @@ namespace HugoCrossPoster
                     .AddPolicyHandler(GetRetryPolicyAsync());
 
                     services.AddHttpClient()
+                    .AddLogging(configure => configure.AddConsole())
                     .AddTransient<IThirdPartyBlogService<MediumPoco>, MediumService>()
                     .AddTransient<IThirdPartyBlogService<DevToPoco>, DevToService>()
                     .AddTransient<IConverter, ConvertFromMarkdownService>();
@@ -141,7 +147,7 @@ namespace HugoCrossPoster
         {
             // Obtain the filename without the directoryPath, so that it can be used for the canonical URL details later on.
             string canonicalPath = filePath.Replace($"{directoryPath}\\", "");
-            Console.WriteLine($"[Loop] Processing ${filePath}");
+            _logger.LogInformation($"[Loop] Processing ${filePath}");
 
             // Read the file contents out to a string
             string sourceFile = await _markdownService.readFile(filePath);
@@ -156,7 +162,7 @@ namespace HugoCrossPoster
             if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
             {
                 // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
-                Console.WriteLine($"[Medium] Crossposting {filePath}...");
+                _logger.LogInformation($"[Medium] Crossposting {filePath}...");
 
                 // Initialise the MediumPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
                 MediumPoco mediumPayload = new MediumPoco()
@@ -168,16 +174,16 @@ namespace HugoCrossPoster
                 };
                 //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
                 await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                Console.WriteLine($"[Medium] Crossposting of {filePath} complete.");
+                _logger.LogInformation($"[Medium] Crossposting of {filePath} complete.");
             } else {
-                Console.WriteLine($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
+                _logger.LogInformation($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
             }
 
             // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
             if (!String.IsNullOrEmpty(devtoToken))
             {
                 // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
-                Console.WriteLine($"[DevTo] Crossposting {filePath}...");
+                _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
                 
                 // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
                 DevToPoco devToPayload = new DevToPoco()
@@ -194,9 +200,9 @@ namespace HugoCrossPoster
                 };
                 //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
                 await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                Console.WriteLine($"[DevTo] Crosspost of {filePath} complete.");
+                _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");
             } else {
-                Console.WriteLine($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
+                _logger.LogInformation($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
             }
         }
     }

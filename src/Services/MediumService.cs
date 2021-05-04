@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -16,17 +17,21 @@ namespace HugoCrossPoster.Services
   /// </remarks>
   public class MediumService : IThirdPartyBlogService<MediumPoco>
     {
-      /// <value>Instance of the IHttpClientFactory to be used throughout the MediumService call. This is a common approach in .NET Core to generate consistent HttpClients. As an example in the context of HugoCrossPoster, named http clients may inherit retry, circuit breaker and other resilience patterns using the Polly Framework, as indicated in the program.cs startup routine.</value>
+      /// <value>Instance of the IHttpClientFactory to be used throughout the Medium Service call. This is a common approach in .NET Core to generate consistent HttpClients. As an example in the context of HugoCrossPoster, named http clients may inherit retry, circuit breaker and other resilience patterns using the Polly Framework, as indicated in the program.cs startup routine.</value>
       private readonly IHttpClientFactory _clientFactory;
+      /// <value>Instance of the ILogger to be used throughout the Medium Service call. This is a common approach in .NET Core to generate consistent HttpClients. As an example in the context of HugoCrossPoster, named http clients may inherit retry, circuit breaker and other resilience patterns using the Polly Framework, as indicated in the program.cs startup routine.</value>
+      private readonly ILogger<MediumService> _logger;
 
-      /// <summary>
-      /// The Medium.com Service constructor.
-      /// This is used as part of the .NET Dependency Injection functionality, binding the IHttpClientFactory interface to concrete types from the startup class.
-      /// </summary>.
-      /// <param name="clientFactory">Instance of the Client Factory which is passed to this service from the Program's startup class.</param>
-      public MediumService(IHttpClientFactory clientFactory)
+        /// <summary>
+        /// The Medium.com Service constructor.
+        /// This is used as part of the .NET Dependency Injection functionality, binding the IHttpClientFactory interface to concrete types from the startup class.
+        /// </summary>.
+        /// <param name="clientFactory">Instance of the Client Factory which is passed to this service from the Program's startup class.</param>
+        /// <param name="logger">Instance of the logger which is passed to this service from the Program's startup class.</param>
+        public MediumService(IHttpClientFactory clientFactory, ILogger<MediumService> logger)
       {
           _clientFactory = clientFactory;
+          _logger = logger;
       }
 
       /// <summary>

@@ -4,11 +4,26 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace HugoCrossPoster.Services
 {
   public class ConvertFromMarkdownService : IConverter
     {
+        /// <value>Instance of the ILogger to be used throughout the DevToService call. This is a common approach in .NET Core to generate consistent HttpClients. As an example in the context of HugoCrossPoster, named http clients may inherit retry, circuit breaker and other resilience patterns using the Polly Framework, as indicated in the program.cs startup routine.</value>
+        private readonly ILogger<ConvertFromMarkdownService> _logger;
+
+
+        /// <summary>
+        /// The dev.to Service constructor.
+        /// This is used as part of the .NET Dependency Injection functionality, binding the IHttpClientFactory interface to concrete types from the startup class.
+        /// </summary>.
+        /// <param name="logger">Instance of the Logger which is passed to this service from the Program's startup class.</param>
+        public ConvertFromMarkdownService(ILogger<ConvertFromMarkdownService> logger)
+        {
+            _logger = logger;
+        }
+
         public async Task<IEnumerable<string>> listFiles(string directoryPath, string searchPattern, bool recursiveSubdirectories) {
             IEnumerable<string> fileList = new List<string>();
 
@@ -17,7 +32,7 @@ namespace HugoCrossPoster.Services
                 fileList = await Task.Run(() => Directory.EnumerateFiles(directoryPath, searchPattern, new System.IO.EnumerationOptions() { RecurseSubdirectories = recursiveSubdirectories }));
                 // Run this next line to validate we received a string, otherwise we can catch the exception.
                 var allStrings = fileList.All(x => x != null);
-                Console.WriteLine(allStrings.ToString());
+                _logger.LogInformation(allStrings.ToString());
             }
             catch (Exception ex)
             {

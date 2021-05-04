@@ -1,31 +1,36 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Services
 {
-  /// <summary>
-  /// Concrete implementation to send content payloads to dev.to.
-  /// </summary>
-  /// <remarks>
-  /// Contains the required implementation implementation of CreatePostAsync to send content to dev.to. Inherits from IThirdPartyBlogService.
-  /// </remarks>
-  public class DevToService : IThirdPartyBlogService<DevToPoco>
+    /// <summary>
+    /// Concrete implementation to send content payloads to dev.to.
+    /// </summary>
+    /// <remarks>
+    /// Contains the required implementation implementation of CreatePostAsync to send content to dev.to. Inherits from IThirdPartyBlogService.
+    /// </remarks>
+    public class DevToService : IThirdPartyBlogService<DevToPoco>
     {
       /// <value>Instance of the IHttpClientFactory to be used throughout the DevToService call. This is a common approach in .NET Core to generate consistent HttpClients. As an example in the context of HugoCrossPoster, named http clients may inherit retry, circuit breaker and other resilience patterns using the Polly Framework, as indicated in the program.cs startup routine.</value>
       private readonly IHttpClientFactory _clientFactory;
+      /// <value>Instance of the ILogger to be used throughout the DevToService call. This is a common approach in .NET Core to generate consistent HttpClients. As an example in the context of HugoCrossPoster, named http clients may inherit retry, circuit breaker and other resilience patterns using the Polly Framework, as indicated in the program.cs startup routine.</value>
+      private readonly ILogger<DevToService> _logger;
 
-      /// <summary>
-      /// The dev.to Service constructor.
-      /// This is used as part of the .NET Dependency Injection functionality, binding the IHttpClientFactory interface to concrete types from the startup class.
-      /// </summary>.
-      /// <param name="clientFactory">Instance of the Client Factory which is passed to this service from the Program's startup class.</param>
-      public DevToService(IHttpClientFactory clientFactory)
+
+        /// <summary>
+        /// The dev.to Service constructor.
+        /// This is used as part of the .NET Dependency Injection functionality, binding the IHttpClientFactory interface to concrete types from the startup class.
+        /// </summary>.
+        /// <param name="clientFactory">Instance of the Client Factory which is passed to this service from the Program's startup class.</param>
+        /// <param name="logger">Instance of the logger which is passed to this service from the Program's startup class.</param>
+        public DevToService(IHttpClientFactory clientFactory, ILogger<DevToService> logger)
       {
           _clientFactory = clientFactory;
+          _logger = logger;
       }
 
       /// <summary>
