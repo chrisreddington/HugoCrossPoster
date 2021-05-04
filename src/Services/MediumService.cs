@@ -36,7 +36,7 @@ namespace HugoCrossPoster.Services
       /// <param name="integrationToken">Integration Token which is used to authorize to the medium.com api. A user can obtain this through their user settings on dev.to.</param>
       /// <param name="authorId">This is required for the medium.com service. Tjhe authorId forms part of the Uri where the articleObject should be POSTed.</param>
       /// <param name="youtube">This is an optional parameter, representing a YouTube Video ID. If the article was originally a YouTube video (e.g.a podcast episode with a video on YouTube), then this should be populated. This is used to automatically append the appropriate liquid tag to the Dev.To article with the YouTube video ID.</param>      
-      public async Task CreatePostAsync(MediumPoco articleObject, string integrationToken, string authorId = null, string youtube = null)
+      public async Task<HttpResponseMessage> CreatePostAsync(MediumPoco articleObject, string integrationToken, string authorId = null, string youtube = null)
       {
         //Prepend the title, as medium doesn't automatically add the title to the page.
         articleObject.content = $"# {articleObject.title}{articleObject.content}";
@@ -60,7 +60,7 @@ namespace HugoCrossPoster.Services
         // Post the article object to the medium.com API by serializing the object to JSON.
         // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
         var postResponse = await client.PostAsJsonAsync(uri, articleObject);
-        postResponse.EnsureSuccessStatusCode();
+        return await Task.Run(() => postResponse.EnsureSuccessStatusCode());
       }
     }
 
