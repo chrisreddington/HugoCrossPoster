@@ -10,11 +10,14 @@ using System.Net;
 using Polly;
 using Polly.Extensions.Http;
 using System;
+using Polly.CircuitBreaker;
 
 namespace HugoCrossPoster.Tests
 {
     public class DevToServiceTests
     {
+        private bool _isCircuitBroken;
+        private bool _isCircuitRestored;
         private bool _isRetryCalled;
         private int _retryCount;
         private readonly Mock<IHttpClientFactory> mockFactory = new Mock<IHttpClientFactory>();
@@ -82,6 +85,8 @@ namespace HugoCrossPoster.Tests
         public async Task AssertHttpCircuitBreakerWorksCorrectly()
         {
             // Arrange - Setup the handler for the mocked HTTP call
+            _isCircuitBroken = false;
+            _isCircuitRestored = false;
             _isRetryCalled = false;
             _retryCount = 0;
 
@@ -126,29 +131,54 @@ namespace HugoCrossPoster.Tests
             };
 
             // Act
-            await GetRetryPolicyAsync().ExecuteAsync(async () =>
+            try
             {
-                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
-            });
+                await GetRetryPolicyAsync().WrapAsync(GetCircuitBreakerPolicyAsync()).ExecuteAsync(async () =>
+                {
+                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                });
+            }
+            catch (BrokenCircuitException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
             // Assert
-            Assert.True(_retryCount > 5);
             Assert.True(_isRetryCalled);
+            Assert.True(_isCircuitBroken);
+            Assert.True(_isCircuitRestored);
         }
 
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()
         {
-            return HttpPolicyExtensions.HandleTransientHttpError()
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
                 .WaitAndRetryAsync(
                     6,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetryAsync: OnRetryAsync)
-                .WrapAsync(Policy.Handle<AggregateException>(x =>
-                {
-                    var result = x.InnerException is HttpRequestException;
-                    return result;
-                })
-                .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)));
+                    onRetryAsync: OnRetryAsync
+                );
+        }
+
+        public IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicyAsync()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+                .CircuitBreakerAsync(
+                    3,
+                    TimeSpan.FromSeconds(10),
+                    onBreak: (ex, breakDelay) =>
+                    {
+                        _isCircuitBroken = true;
+                        // TODO: Investigate more elegant way to handle this. Currently detecting if circuit is broken, and sleeping until the next call.
+                        Thread.Sleep(10000);
+                    },
+                    onReset: () =>
+                    {
+                        _isCircuitRestored = true;
+                    }
+                );
         }
 
 
@@ -158,6 +188,5 @@ namespace HugoCrossPoster.Tests
             await Task.Run(() => _isRetryCalled = true);
             await Task.Run(() => _retryCount++);
         }
-
     }
 }
