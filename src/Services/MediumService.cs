@@ -55,7 +55,10 @@ namespace HugoCrossPoster.Services
         var client = _clientFactory.CreateClient("devto");
 
         // Add the integration to the Authorization header in the form of a bearer token, per the medium.com API specification.
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {integrationToken}");
+        if (client.DefaultRequestHeaders.Authorization == null)
+        {
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {integrationToken}");
+        }
 
         // Post the article object to the medium.com API by serializing the object to JSON.
         // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.

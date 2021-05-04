@@ -13,7 +13,7 @@ using System;
 
 namespace HugoCrossPoster.Tests
 {
-    public class DevToServiceTests
+    public class MediumServiceTests
     {
         private bool _isRetryCalled;
         private int _retryCount;
@@ -52,25 +52,19 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Arrange - Setup the Service/Poco details
-            DevToService devtoService = new DevToService(mockFactory.Object);
-            DevToPoco devtoPoco = new DevToPoco()
+            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumPoco mediumPoco = new MediumPoco()
             {
-                article = new Article()
-                {
-                    body_markdown = "#Test My Test",
-                    description = "This is a description",
-                    canonical_url = "https://www.cloudwithchris.com",
-                    published = false,
-                    series = "Cloud Drops",
-                    tags = new List<string>() { "DevOps", "GitHub" },
-                    title = "Descriptive Title"
-                }
+                content = "#Test My Test",
+                canonicalUrl = "https://www.cloudwithchris.com",
+                tags = new List<string>() { "DevOps", "GitHub" },
+                title = "Descriptive Title"
             };
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", "myAuthorId");
             });
 
             // Assert
@@ -110,25 +104,19 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Arrange - Setup the Service/Poco details
-            DevToService devtoService = new DevToService(mockFactory.Object);
-            DevToPoco devtoPoco = new DevToPoco()
+            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumPoco mediumPoco = new MediumPoco()
             {
-                article = new Article()
-                {
-                    body_markdown = "#Test My Test",
-                    description = "This is a description",
-                    canonical_url = "https://www.cloudwithchris.com",
-                    published = false,
-                    series = "Cloud Drops",
-                    tags = new List<string>() { "DevOps", "GitHub" },
-                    title = "Descriptive Title"
-                }
+                content = "#Test My Test",
+                canonicalUrl = "https://www.cloudwithchris.com",
+                tags = new List<string>() { "DevOps", "GitHub" },
+                title = "Descriptive Title"
             };
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", "myAuthorId");
             });
 
             // Assert
