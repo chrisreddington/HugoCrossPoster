@@ -131,6 +131,7 @@ namespace HugoCrossPoster.Tests
             // Arrange
             string originalContent = "#Hello\n* world\n* 1234";
             string youtube = "abc123456";
+            string expectedLogOutput = $"Youtube ID {youtube} added";
 
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -151,10 +152,12 @@ namespace HugoCrossPoster.Tests
 
             // Assert
             Assert.Contains($"https://youtu.be/{youtube}", contentWithYouTube);
+            Func<object, Type, bool> state = (v, t) => v.ToString().CompareTo(expectedLogOutput) == 0;
+
             mockLogger.Verify(l => l.Log(
              LogLevel.Information,
              It.IsAny<EventId>(),
-             It.IsAny<It.IsAnyType>(),
+             It.Is<It.IsAnyType>((v, t) => state(v, t)),
              It.IsAny<Exception>(),
              (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
@@ -165,6 +168,7 @@ namespace HugoCrossPoster.Tests
             // Arrange
             string originalContent = "#Hello\n* world\n* 1234";
             string youtube = "";
+            string expectedLogOutput = "No YouTube ID provided, not embedding a YouTube Video.";
 
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -185,10 +189,13 @@ namespace HugoCrossPoster.Tests
 
             // Assert
             Assert.Equal(originalContent, contentWithYouTube);
+
+            Func<object, Type, bool> state = (v, t) => v.ToString().CompareTo(expectedLogOutput) == 0;
+
             mockLogger.Verify(l => l.Log(
              LogLevel.Information,
              It.IsAny<EventId>(),
-             It.IsAny<It.IsAnyType>(),
+             It.Is<It.IsAnyType>((v, t) => state(v, t)),
              It.IsAny<Exception>(),
              (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
@@ -199,6 +206,7 @@ namespace HugoCrossPoster.Tests
             // Arrange
             string originalContent = "#Hello\n* world\n* 1234";
             string youtube = null;
+            string expectedLogOutput = "No YouTube ID provided, not embedding a YouTube Video.";
 
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -219,10 +227,13 @@ namespace HugoCrossPoster.Tests
 
             // Assert
             Assert.Equal(originalContent, contentWithYouTube);
+
+            Func<object, Type, bool> state = (v, t) => v.ToString().CompareTo(expectedLogOutput) == 0;
+
             mockLogger.Verify(l => l.Log(
              LogLevel.Information,
              It.IsAny<EventId>(),
-             It.IsAny<It.IsAnyType>(),
+             It.Is<It.IsAnyType>((v, t) => state(v, t)),
              It.IsAny<Exception>(),
              (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }

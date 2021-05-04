@@ -65,11 +65,11 @@ namespace HugoCrossPoster.Services
         {
             if (!String.IsNullOrEmpty(youtube))
             {
-                _logger.LogInformation($"Youtube ID {youtube} added");
+                _logger.LogInformation("Youtube ID {youtube} added", youtube);
                 return await Task.Run(() => originalBody += $"\n\n{{% youtube {youtube} %}}");
             }
 
-            _logger.LogInformation($"Youtube ID {youtube} was not added");
+            _logger.LogInformation("No YouTube ID provided, not embedding a YouTube Video.");
             return originalBody;
         }
     }
