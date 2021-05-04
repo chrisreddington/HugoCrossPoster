@@ -43,6 +43,25 @@ namespace HugoCrossPoster.Tests
         }
 
         [Fact]
+        public async Task AssertUrlizePropertyFunctionalityWorksCorrectly()
+        {
+            // Arrange
+            string nonUrlFriendlyTags = @"key: 
+            - Tag 1
+            - TAG 2
+            - TAG-3";
+
+            // Act
+            List<string> tags = await markdownService.getFrontMatterPropertyList(nonUrlFriendlyTags, "key", 10, true);
+
+            // Assert
+            await Task.Run(() => Assert.Equal(3, tags.Count));
+            await Task.Run(() => Assert.Equal("tag1", tags[0]));
+            await Task.Run(() => Assert.Equal("tag2", tags[1]));
+            await Task.Run(() => Assert.Equal("tag-3", tags[2]));
+        }
+
+        [Fact]
         public async Task AssertRegexWorksWhenThereAreSpacesAfterPropertyName()
         {
             // Arrange
