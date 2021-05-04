@@ -37,12 +37,10 @@ namespace HugoCrossPoster.Services
       /// <param name="youtube">This is an optional parameter, representing a YouTube Video ID. If the article was originally a YouTube video (e.g.a podcast episode with a video on YouTube), then this should be populated. This is used to automatically append the appropriate liquid tag to the Dev.To article with the YouTube video ID.</param>
       public async Task<HttpResponseMessage> CreatePostAsync(DevToPoco articleObject, string integrationToken, string authorId = null, string youtube = null)
       {
+
         // If there is a youtube parameter, add it to the end of the content with a liquid tag.
-        if (!String.IsNullOrEmpty(youtube))
-        {
-          articleObject.article.body_markdown += $"\n\n{{% youtube {youtube} %}}";
-        }
- 
+        articleObject.article.body_markdown = await AppendYouTubeInformation(articleObject.article.body_markdown, youtube);
+
         // Define the dev.to API URI, where we will be sending the articles.
         string uri = $"https://dev.to/api/articles";
 
@@ -56,6 +54,16 @@ namespace HugoCrossPoster.Services
         // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
         var postResponse = await client.PostAsJsonAsync(uri, articleObject);
         return await Task.Run(() => postResponse.EnsureSuccessStatusCode());
+        }
+
+        public async Task<string> AppendYouTubeInformation(string originalBody, string youtube)
+        {
+            if (!String.IsNullOrEmpty(youtube))
+            {
+                return await Task.Run(() => originalBody += $"\n\n{{% youtube {youtube} %}}");
+            }
+
+            return originalBody;
         }
     }
 

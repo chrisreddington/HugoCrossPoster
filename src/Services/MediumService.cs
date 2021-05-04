@@ -42,10 +42,7 @@ namespace HugoCrossPoster.Services
         articleObject.content = $"# {articleObject.title}{articleObject.content}";
 
         // If there is a youtube parameter, add it to the end of the content.
-        if (!String.IsNullOrEmpty(youtube))
-        {
-          articleObject.content += $"\n\nhttps://youtu.be/{youtube}";
-        }
+        articleObject.content = await AppendYouTubeInformation(articleObject.content, youtube);
 
         // Define the dev.to API URI, where we will be sending the articles.
         // Note that authorId is required as it forms part of the URI.
@@ -65,6 +62,16 @@ namespace HugoCrossPoster.Services
         var postResponse = await client.PostAsJsonAsync(uri, articleObject);
         return await Task.Run(() => postResponse.EnsureSuccessStatusCode());
       }
+
+        public async Task<string> AppendYouTubeInformation(string originalBody, string youtube)
+        {
+            if (!String.IsNullOrEmpty(youtube))
+            {
+                return await Task.Run(() => originalBody += $"\n\nhttps://youtu.be/{youtube}");
+            }
+
+            return originalBody;
+        }
     }
 
     public class MediumPoco

@@ -149,6 +149,91 @@ namespace HugoCrossPoster.Tests
             Assert.True(_isCircuitRestored);
         }
 
+
+        [Fact]
+        public async Task VerifyYouTubeLiquidTagAddedAtEndOfBody()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234";
+            string youtube = "abc123456";
+
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    return new HttpResponseMessage()
+                    {
+                        StatusCode = HttpStatusCode.OK
+                    };
+                });
+
+            var client = new HttpClient(mockHttpMessageHandler.Object);
+            mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+
+            // Act
+            DevToService devtoService = new DevToService(mockFactory.Object);
+            string contentWithYouTube = await devtoService.AppendYouTubeInformation(originalContent, youtube);
+
+            // Assert
+            Assert.Contains($"{{% youtube {youtube} %}}", contentWithYouTube);
+        }
+
+        [Fact]
+        public async Task VerifyNoChangeIfEmptyYouTubePropertySpecified()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234";
+            string youtube = "";
+
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    return new HttpResponseMessage()
+                    {
+                        StatusCode = HttpStatusCode.OK
+                    };
+                });
+
+            var client = new HttpClient(mockHttpMessageHandler.Object);
+            mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+
+            // Act
+            DevToService devtoService = new DevToService(mockFactory.Object);
+            string contentWithYouTube = await devtoService.AppendYouTubeInformation(originalContent, youtube);
+
+            // Assert
+            Assert.Equal(originalContent, contentWithYouTube);
+        }
+
+        [Fact]
+        public async Task VerifyNoChangeIfNullYouTubePropertySpecified()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234";
+            string youtube = null;
+
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(() =>
+                {
+                    return new HttpResponseMessage()
+                    {
+                        StatusCode = HttpStatusCode.OK
+                    };
+                });
+
+            var client = new HttpClient(mockHttpMessageHandler.Object);
+            mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+
+            // Act
+            DevToService devtoService = new DevToService(mockFactory.Object);
+            string contentWithYouTube = await devtoService.AppendYouTubeInformation(originalContent, youtube);
+
+            // Assert
+            Assert.Equal(originalContent, contentWithYouTube);
+        }
+
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()
         {
             return HttpPolicyExtensions
