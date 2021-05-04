@@ -11,6 +11,7 @@ using Polly;
 using Polly.Extensions.Http;
 using System;
 using Polly.CircuitBreaker;
+using Microsoft.Extensions.Logging;
 
 namespace HugoCrossPoster.Tests
 {
@@ -21,6 +22,7 @@ namespace HugoCrossPoster.Tests
         private bool _isRetryCalled;
         private int _retryCount;
         private readonly Mock<IHttpClientFactory> mockFactory = new Mock<IHttpClientFactory>();
+        private readonly Mock<ILogger<DevToService>> mockLogger = new Mock<ILogger<DevToService>>();
         private readonly Mock<HttpMessageHandler> mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 
         [Fact]
@@ -55,7 +57,7 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Arrange - Setup the Service/Poco details
-            DevToService devtoService = new DevToService(mockFactory.Object);
+            DevToService devtoService = new DevToService(mockFactory.Object, mockLogger.Object);
             DevToPoco devtoPoco = new DevToPoco()
             {
                 article = new Article()
@@ -115,7 +117,7 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Arrange - Setup the Service/Poco details
-            DevToService devtoService = new DevToService(mockFactory.Object);
+            DevToService devtoService = new DevToService(mockFactory.Object, mockLogger.Object);
             DevToPoco devtoPoco = new DevToPoco()
             {
                 article = new Article()
@@ -171,11 +173,17 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Act
-            DevToService devtoService = new DevToService(mockFactory.Object);
+            DevToService devtoService = new DevToService(mockFactory.Object, mockLogger.Object);
             string contentWithYouTube = await devtoService.AppendYouTubeInformation(originalContent, youtube);
 
             // Assert
             Assert.Contains($"{{% youtube {youtube} %}}", contentWithYouTube);
+            mockLogger.Verify(l => l.Log(
+             LogLevel.Information,
+             It.IsAny<EventId>(),
+             It.IsAny<It.IsAnyType>(),
+             It.IsAny<Exception>(),
+             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -199,11 +207,17 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Act
-            DevToService devtoService = new DevToService(mockFactory.Object);
+            DevToService devtoService = new DevToService(mockFactory.Object, mockLogger.Object);
             string contentWithYouTube = await devtoService.AppendYouTubeInformation(originalContent, youtube);
 
             // Assert
             Assert.Equal(originalContent, contentWithYouTube);
+            mockLogger.Verify(l => l.Log(
+             LogLevel.Information,
+             It.IsAny<EventId>(),
+             It.IsAny<It.IsAnyType>(),
+             It.IsAny<Exception>(),
+             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -227,11 +241,17 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Act
-            DevToService devtoService = new DevToService(mockFactory.Object);
+            DevToService devtoService = new DevToService(mockFactory.Object, mockLogger.Object);
             string contentWithYouTube = await devtoService.AppendYouTubeInformation(originalContent, youtube);
 
             // Assert
             Assert.Equal(originalContent, contentWithYouTube);
+            mockLogger.Verify(l => l.Log(
+             LogLevel.Information,
+             It.IsAny<EventId>(),
+             It.IsAny<It.IsAnyType>(),
+             It.IsAny<Exception>(),
+             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()

@@ -10,6 +10,7 @@ using System.Net;
 using Polly;
 using Polly.Extensions.Http;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace HugoCrossPoster.Tests
 {
@@ -18,6 +19,7 @@ namespace HugoCrossPoster.Tests
         private bool _isRetryCalled;
         private int _retryCount;
         private readonly Mock<IHttpClientFactory> mockFactory = new Mock<IHttpClientFactory>();
+        private readonly Mock<ILogger<MediumService>> mockLogger = new Mock<ILogger<MediumService>>();
         private readonly Mock<HttpMessageHandler> mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 
         [Fact]
@@ -52,7 +54,7 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Arrange - Setup the Service/Poco details
-            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
             MediumPoco mediumPoco = new MediumPoco()
             {
                 content = "#Test My Test",
@@ -99,12 +101,11 @@ namespace HugoCrossPoster.Tests
                     }
                 });
 
-
             var client = new HttpClient(mockHttpMessageHandler.Object);
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Arrange - Setup the Service/Poco details
-            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
             MediumPoco mediumPoco = new MediumPoco()
             {
                 content = "#Test My Test",
@@ -123,7 +124,6 @@ namespace HugoCrossPoster.Tests
             Assert.True(_retryCount > 5);
             Assert.True(_isRetryCalled);
         }
-
 
         [Fact]
         public async Task VerifyYouTubeLiquidTagAddedAtEndOfBody()
@@ -146,11 +146,17 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Act
-            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
             string contentWithYouTube = await mediumService.AppendYouTubeInformation(originalContent, youtube);
 
             // Assert
             Assert.Contains($"https://youtu.be/{youtube}", contentWithYouTube);
+            mockLogger.Verify(l => l.Log(
+             LogLevel.Information,
+             It.IsAny<EventId>(),
+             It.IsAny<It.IsAnyType>(),
+             It.IsAny<Exception>(),
+             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -174,11 +180,17 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Act
-            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
             string contentWithYouTube = await mediumService.AppendYouTubeInformation(originalContent, youtube);
 
             // Assert
             Assert.Equal(originalContent, contentWithYouTube);
+            mockLogger.Verify(l => l.Log(
+             LogLevel.Information,
+             It.IsAny<EventId>(),
+             It.IsAny<It.IsAnyType>(),
+             It.IsAny<Exception>(),
+             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -202,11 +214,17 @@ namespace HugoCrossPoster.Tests
             mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
 
             // Act
-            MediumService mediumService = new MediumService(mockFactory.Object);
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
             string contentWithYouTube = await mediumService.AppendYouTubeInformation(originalContent, youtube);
 
             // Assert
             Assert.Equal(originalContent, contentWithYouTube);
+            mockLogger.Verify(l => l.Log(
+             LogLevel.Information,
+             It.IsAny<EventId>(),
+             It.IsAny<It.IsAnyType>(),
+             It.IsAny<Exception>(),
+             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()
