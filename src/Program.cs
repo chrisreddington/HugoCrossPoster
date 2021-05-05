@@ -185,19 +185,36 @@ namespace HugoCrossPoster
                 // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
                 _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
                 
+                List<string> series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1));
+                DevToPoco devToPayload;
+
                 // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-                DevToPoco devToPayload = new DevToPoco()
-                {
-                    article = new Article()
+                if (series.Count > 0){
+                    devToPayload = new DevToPoco()
                     {
-                        title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                        body_markdown = contentWithoutFrontMatter,
-                        canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
-                        description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
-                        series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1))[0]
-                    }
-                };
+                        article = new Article()
+                        {
+                            title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
+                            body_markdown = contentWithoutFrontMatter,
+                            canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
+                            tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
+                            description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
+                            series = series[0]
+                        }
+                    };
+                } else {
+                    devToPayload = new DevToPoco()
+                    {
+                        article = new Article()
+                        {
+                            title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
+                            body_markdown = contentWithoutFrontMatter,
+                            canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
+                            tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
+                            description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description")
+                        }
+                    };
+                }
                 //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
                 await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
                 _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");

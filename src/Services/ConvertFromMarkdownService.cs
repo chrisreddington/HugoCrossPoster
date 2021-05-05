@@ -75,7 +75,7 @@ namespace HugoCrossPoster.Services
       public async Task<string> getFrontmatterProperty (string fileContents, string key)
       {
             // Find the frontmatter with the Key 'key' in the YAML
-            string pattern = $@"{key}: ('?""?)*(?<{key}>[\w-\s]+)('?""?)*";
+            string pattern = $@"{key}: ('?""?)*(?<{key}>[-!$%^&*()_+|~=`{{}}\[\]:"";'<>?,.\/\w. ]+)('?""?)*";
           Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
           // Return the value of the <key> matched group
@@ -86,7 +86,7 @@ namespace HugoCrossPoster.Services
       public async Task<List<string>> getFrontMatterPropertyList (string fileContents, string key, int count = 10, bool urlize = false)
       {
           // Find the frontmatter for the key in the YAML
-          string pattern = $@"{key}:\s*(?<{key}>(-\s[\w\s\W]+\s?)*)";
+          string pattern = $@"{key}:\s*(?<{key}>(-\s[-!$%^&*()_+|~=`{{}}\[\]:"";'<>?,.\/\w. ]+\s?)*)";
             Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
 
           //Remove the "- " from the string
