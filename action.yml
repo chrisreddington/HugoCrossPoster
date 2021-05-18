@@ -12,6 +12,7 @@ inputs:
     description:
       'Boolean (True/False) on whether Recursive Subdirectories should be used for file access'
     required: true
+    default: 'false'
   originalPostInformation:
     description:
       'Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.'
@@ -54,3 +55,5 @@ runs:
   args:
   - "-f"
   - "${{ inputs.directoryPath }}"
+  - "-r"
+  - "${{ inputs.recursiveSubdirectories }}"
