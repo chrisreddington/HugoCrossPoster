@@ -1,0 +1,74 @@
+name: 'Hugo Crossposter'
+description: 'This is a work in progress .NET Core Console App to ease cross posting from Hugo to alternate formats.'
+branding:
+  icon: activity
+  color: orange
+inputs:
+  directoryPath:
+    description:
+      'Directory path of the content to be converted and crossposted.'
+    required: true
+  recursiveSubdirectories:
+    description:
+      'Boolean (True/False) on whether Recursive Subdirectories should be used for file access'
+    required: true
+  originalPostInformation:
+    description:
+      'Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.'
+    required: false
+    default: 'false'
+  logOutputOnly:
+    description:
+      'Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.'
+    required: false
+    default: 'false'
+  searchPattern:
+    description:
+      'The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesnt support regular expressions. Defaults to *.md.'
+    required: false
+    default: '*.md'
+  baseUrl:
+    description:
+      'Base URL of the website, not including protocol. e.g. www.cloudwithchris.com. This is used for converting any relative links to the original source, including the canonical URL.'
+    required: true
+    default: 'www.cloudwithchris.com'
+  devtoToken:
+    description:
+      'DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.'
+    required: false
+  mediumAuthorId:
+    description:
+      'Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.'
+    required: false
+  mediumToken:
+    description:
+      'Medium Integration Token. This is required to authorize to the Medium API.'
+    required: false
+  protocol:
+    description:
+      'MedProtocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.'
+    required: false
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+  - '-f'
+  - ${{ inputs.directoryPath }}
+  - '-r'
+  - ${{ inputs.recursiveSubdirectories }}
+  - '-o'
+  - ${{ inputs.originalPostInformation }}
+  - '-l'
+  - ${{ inputs.logOutputOnly }}
+  - '-s'
+  - ${{ inputs.searchPattern }}
+  - '-u'
+  - ${{ inputs.baseUrl }}
+  - '-d'
+  - ${{ inputs.devtoToken }}
+  - '-a'
+  - ${{ inputs.mediumAuthorId }}
+  - '-i'
+  - ${{ inputs.mediumToken }}
+  - '-p'
+  - ${{ inputs.protocol }}
