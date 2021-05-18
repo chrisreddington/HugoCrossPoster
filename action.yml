@@ -52,13 +52,5 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-  - "-f '${{ inputs.directoryPath }}'"
-  - "-r '${{ inputs.recursiveSubdirectories }}'"
-  - "-o '${{ inputs.originalPostInformation }}'"
-  - "-l '${{ inputs.logOutputOnly }}'"
-  - "-s '${{ inputs.searchPattern }}'"
-  - "-u '${{ inputs.baseUrl }}'"
-  - "-d '${{ inputs.devtoToken }}'"
-  - "-a '${{ inputs.mediumAuthorId }}'"
-  - "-i '${{ inputs.mediumToken }}'"
-  - "-p '${{ inputs.protocol }}'"
+  - "-f"
+  - "${{ inputs.directoryPath }}"
