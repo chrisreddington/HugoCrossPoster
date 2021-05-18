@@ -47,7 +47,7 @@ inputs:
     required: false
   protocol:
     description:
-      'MedProtocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.'
+      'Protocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.'
     required: false
 runs:
   using: 'docker'
@@ -63,3 +63,7 @@ runs:
   - "${{ inputs.logOutputOnly }}"
   - "-s"
   - "${{ inputs.searchPattern }}"
+  - "-u"
+  - "${{ inputs.baseUrl }}"
+  - "-d"
+  - "${{ inputs.devtoToken }}"
