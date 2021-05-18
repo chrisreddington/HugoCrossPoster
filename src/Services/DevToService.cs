@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Services
@@ -46,6 +47,9 @@ namespace HugoCrossPoster.Services
         // If there is a youtube parameter, add it to the end of the content with a liquid tag.
         articleObject.article.body_markdown = await AppendYouTubeInformation(articleObject.article.body_markdown, youtube);
 
+        // Replace any Tweet references in the content
+        articleObject.article.body_markdown = await ReplaceEmbeddedTweets(articleObject.article.body_markdown);
+
         // Define the dev.to API URI, where we will be sending the articles.
         string uri = $"https://dev.to/api/articles";
 
@@ -61,6 +65,11 @@ namespace HugoCrossPoster.Services
         return await Task.Run(() => postResponse.EnsureSuccessStatusCode());
         }
 
+        /// <summary>
+        /// Method to take an ID of a YouTube video and convert it into the appropriate format for DevTo
+        /// </summary>.
+        /// <param name="originalBody">The original content body text</param>
+        /// <param name="youtube">This is an optional parameter, representing a YouTube Video ID. If an ID is passed in, then it will add the appropriate representation into the content body for Devto.
         public async Task<string> AppendYouTubeInformation(string originalBody, string youtube)
         {
             if (!String.IsNullOrEmpty(youtube))
@@ -71,6 +80,24 @@ namespace HugoCrossPoster.Services
 
             _logger.LogInformation("No YouTube ID provided, not embedding a YouTube Video.");
             return originalBody;
+        }
+
+        /// <summary>
+        /// Method to replace the Hugo Tweet Embed shortcode with the appropriate code for DevTo.
+        /// </summary>.
+        /// <param name="fileContent">The original content body text</param>
+        public async Task<string> ReplaceEmbeddedTweets(string fileContents)
+        {
+            // Find any strings that match the {{< tweet id >}} syntax
+            string pattern = @"{{< tweet (.*) >}}";
+
+            // We'll then replace it with the appropriate syntax for Medium, which is the full Twitter URL.
+            string replacement = $"{{% twitter $1 %}}";
+
+            string returnValue = Regex.Replace(fileContents, pattern, replacement);
+
+            // Replace the contents throughout the doc and return the result.
+            return await Task<string>.Run(() => returnValue);
         }
     }
 

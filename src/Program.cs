@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace HugoCrossPoster
 {
@@ -95,7 +97,15 @@ namespace HugoCrossPoster
 
         /// <value>Boolean (True/False) on whether Recursive Subdirectories should be used for file access</value>
         [Option(ShortName = "r", Description = "Boolean (True/False) on whether Recursive Subdirectories should be used for file access")]
-        public bool recursiveSubdirectories { get; } = false;
+        public bool recursiveSubdirectories { get; } = true;
+
+        /// <value>Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.</value>
+        [Option(ShortName = "o", Description = "Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.")]
+        public bool originalPostInformation { get; } = true;
+
+        /// <value>Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.</value>
+        [Option(ShortName = "l", Description = "Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.")]
+        public bool logOutputOnly { get; } = false;
 
         /// <value>The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.</value>
         [Option(ShortName = "s", Description = "The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.")]
@@ -156,70 +166,95 @@ namespace HugoCrossPoster
             string contentWithFrontMatter = await _markdownService.replaceLocalURLs(sourceFile, baseUrl);
 
             // Also take a copy of the file contents, but without the frontmatter. This may be needed dependant upon the third party service.
-            string contentWithoutFrontMatter = await _markdownService.removeFrontMatter(contentWithFrontMatter);            
+            string contentWithoutFrontMatter = await _markdownService.removeFrontMatter(contentWithFrontMatter);
+            string publishedDate = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "PublishDate");
+            string canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath);
 
-            // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
-            if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
+            // If required, prepend the original post information.
+            /*if (originalPostInformation && !string.IsNullOrEmpty(publishedDate))
             {
-                // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
-                _logger.LogInformation($"[Medium] Crossposting {filePath}...");
+                contentWithoutFrontMatter = await _markdownService.prependOriginalPostSnippet(contentWithoutFrontMatter, DateTime.ParseExact(publishedDate, "yyyy-MM-dd HH:mm:ss", null), canonicalUrl);
+            }*/
 
-                // Initialise the MediumPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-                MediumPoco mediumPayload = new MediumPoco()
+
+            // Initialise the MediumPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
+            MediumPoco mediumPayload = new MediumPoco()
+            {
+                title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
+                content = contentWithoutFrontMatter,
+                canonicalUrl = canonicalUrl,
+                tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags")
+            };
+
+            List<string> series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1));
+            DevToPoco devToPayload;
+
+            // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
+            if (series.Count > 0)
+            {
+                devToPayload = new DevToPoco()
                 {
-                    title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                    content = contentWithoutFrontMatter,
-                    canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                    tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags")
+                    article = new Article()
+                    {
+                        title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
+                        body_markdown = contentWithoutFrontMatter,
+                        canonical_url = canonicalUrl,
+                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
+                        description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
+                        series = series[0]
+                    }
                 };
-                //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
-                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                _logger.LogInformation($"[Medium] Crossposting of {filePath} complete.");
-            } else {
-                _logger.LogInformation($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
+            }
+            else
+            {
+                devToPayload = new DevToPoco()
+                {
+                    article = new Article()
+                    {
+                        title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
+                        body_markdown = contentWithoutFrontMatter,
+                        canonical_url = canonicalUrl,
+                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
+                        description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description")
+                    }
+                };
             }
 
-            // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
-            if (!String.IsNullOrEmpty(devtoToken))
+            if (!logOutputOnly)
             {
-                // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
-                _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
-                
-                List<string> series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1));
-                DevToPoco devToPayload;
+                // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
+                if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
+                {
+                    // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
+                    _logger.LogInformation($"[Medium] Crossposting {filePath}...");
 
-                // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-                if (series.Count > 0){
-                    devToPayload = new DevToPoco()
-                    {
-                        article = new Article()
-                        {
-                            title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                            body_markdown = contentWithoutFrontMatter,
-                            canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                            tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
-                            description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
-                            series = series[0]
-                        }
-                    };
-                } else {
-                    devToPayload = new DevToPoco()
-                    {
-                        article = new Article()
-                        {
-                            title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                            body_markdown = contentWithoutFrontMatter,
-                            canonical_url = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath),
-                            tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
-                            description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description")
-                        }
-                    };
+                    //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
+                    await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                    _logger.LogInformation($"[Medium] Crossposting of {filePath} complete.");
                 }
-                //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
-                await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");
-            } else {
-                _logger.LogInformation($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
+                else
+                {
+                    _logger.LogInformation($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
+                }
+
+                // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
+                if (!String.IsNullOrEmpty(devtoToken))
+                {
+                    // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
+                    _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
+
+                    //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
+                    await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                    _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");
+                }
+                else
+                {
+                    _logger.LogInformation($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
+                }
+            } else
+            {
+                _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
+                _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
             }
         }
     }

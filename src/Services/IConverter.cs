@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,5 +19,6 @@ namespace HugoCrossPoster.Services
         Task<string> readFile(string fileName);
         Task<string> removeFrontMatter(string fileContents);
         Task<string> replaceLocalURLs(string fileContents, string baseUrl);
+        Task<string> prependOriginalPostSnippet(string fileContents, DateTime publishDate, string canonicalUrl);
     }
 }

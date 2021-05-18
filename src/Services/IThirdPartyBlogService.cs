@@ -13,5 +13,6 @@ namespace HugoCrossPoster.Services
     {
         Task<HttpResponseMessage> CreatePostAsync(T articleObject, string integrationToken, string authorId = null, string youtube = null);
         Task<string> AppendYouTubeInformation(string originalBody, string youtube);
+        Task<string> ReplaceEmbeddedTweets(string fileContents);
     }
 }
