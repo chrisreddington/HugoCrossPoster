@@ -97,15 +97,15 @@ namespace HugoCrossPoster
 
         /// <value>Boolean (True/False) on whether Recursive Subdirectories should be used for file access</value>
         [Option(ShortName = "r", Description = "Boolean (True/False) on whether Recursive Subdirectories should be used for file access")]
-        public bool recursiveSubdirectories { get; } = true;
+        public string recursiveSubdirectories { get; } = "true";
 
         /// <value>Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.</value>
         [Option(ShortName = "o", Description = "Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.")]
-        public bool originalPostInformation { get; } = true;
+        public string originalPostInformation { get; } = "true";
 
         /// <value>Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.</value>
         [Option(ShortName = "l", Description = "Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.")]
-        public bool logOutputOnly { get; } = false;
+        public string logOutputOnly { get; } = "false";
 
         /// <value>The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.</value>
         [Option(ShortName = "s", Description = "The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.")]
@@ -136,7 +136,7 @@ namespace HugoCrossPoster
         /// </summary>
         async Task<int> OnExecute()
         {
-            List<string> matchedFiles = (await _markdownService.listFiles(directoryPath, searchPattern, recursiveSubdirectories)).ToList();
+            List<string> matchedFiles = (await _markdownService.listFiles(directoryPath, searchPattern, recursiveSubdirectories.ToLower() == "true")).ToList();
 
             List<Task> listOfTasks = new List<Task>();
             for (int i = 0; i  < matchedFiles.Count; i++)
@@ -220,7 +220,7 @@ namespace HugoCrossPoster
                 };
             }
 
-            if (!logOutputOnly)
+            if (!logOutputOnly.ToLower().Equals("true"))
             {
                 // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
                 if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
