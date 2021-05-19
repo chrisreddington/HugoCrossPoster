@@ -89,9 +89,9 @@ To run the application, find the generated dll in the /bin/ subdirectory (depend
 You will notice that there are several flags (inputs) required to successfully execute the application. These are clearly documented within program.cs.
 
 ## Contributing
-This project welcomes contributions and suggestions. When you submit code changes, your submissions will be understood under the same [MIT License](https://github.com/chrisreddington/hugo-community/blob/main/LICENSE) that covers the project.
+This project welcomes contributions and suggestions. When you submit code changes, your submissions will be understood under the same [MIT License](https://github.com/chrisreddington/HugoCrossPoster/blob/main/LICENSE) that covers the project.
 
-For detailed guidelines, including Feature Requests, Bug Reports and Code Contributions visit the [Contributing Guide](https://github.com/chrisreddington/hugo-community/blob/main/CONTRIBUTING.md).
+For detailed guidelines, including Feature Requests, Bug Reports and Code Contributions visit the [Contributing Guide](https://github.com/chrisreddington/HugoCrossPoster/blob/main/CONTRIBUTING.md).
 
 ## Support
 If you like this project, I'd greatly appreciate your support for my blog/podcast/vlog, Cloud With Chris.
