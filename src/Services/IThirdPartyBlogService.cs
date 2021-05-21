@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Services
@@ -11,7 +12,7 @@ namespace HugoCrossPoster.Services
     /// </remarks>
     public interface IThirdPartyBlogService<in T>
     {
-        Task<HttpResponseMessage> CreatePostAsync(T articleObject, string integrationToken, string authorId = null, string youtube = null);
+        Task CreatePostAsync(T articleObject, string integrationToken, CancellationToken cancellationToken, string authorId = null, string youtube = null);
         Task<string> AppendYouTubeInformation(string originalBody, string youtube);
         Task<string> ReplaceEmbeddedTweets(string fileContents);
     }
