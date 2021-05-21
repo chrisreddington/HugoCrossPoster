@@ -38,11 +38,11 @@ This software is a pet side-project and currently in active development. It is t
     # Default: false
     originalPostInformation: 'false'
 
-    # Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.
+    # Boolean (True/False) on whether the output of the payload should also be outputted in the logs.
     # This is not a required property.
     #
     # Default: false
-    logOutputOnly: 'false'
+    logPayloadOutput: 'false'
 
     # The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters
     # but it # doesn't support regular expressions. Defaults to *.md.

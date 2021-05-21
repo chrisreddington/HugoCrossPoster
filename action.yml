@@ -18,9 +18,9 @@ inputs:
       'Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.'
     required: false
     default: 'false'
-  logOutputOnly:
+  logPayloadOutput:
     description:
-      'Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.'
+      'Boolean (True/False) on whether the output of the payload should also be outputted in the logs.'
     required: false
     default: 'false'
   searchPattern:
@@ -60,7 +60,7 @@ runs:
   - "-o"
   - "${{ inputs.originalPostInformation }}"
   - "-l"
-  - "${{ inputs.logOutputOnly }}"
+  - "${{ inputs.logPayloadOutput }}"
   - "-s"
   - "${{ inputs.searchPattern }}"
   - "-u"

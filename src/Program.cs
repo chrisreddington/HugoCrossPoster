@@ -103,9 +103,9 @@ namespace HugoCrossPoster
         [Option(ShortName = "o", Description = "Boolean (True/False) on whether the details of the original post (date/time, and canonical URL) should be included in the rendered markdown.")]
         public string originalPostInformation { get; } = "true";
 
-        /// <value>Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.</value>
-        [Option(ShortName = "l", Description = "Boolean (True/False) on whether the output should be locally logged only, and not send to the 3rd party sites.")]
-        public string logOutputOnly { get; } = "false";
+        /// <value>Boolean (True/False) on whether the output of the payload should also be outputted in the logs.</value>
+        [Option(ShortName = "l", Description = "Boolean (True/False) on whether the output of the payload should also be outputted in the logs.")]
+        public string logPayloadOutput { get; } = "true";
 
         /// <value>The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.</value>
         [Option(ShortName = "s", Description = "The search string to match against the names of files in path. This parameter can contain a combination of valid literal path and wildcard (* and ?) characters, but it doesn't support regular expressions. Defaults to *.md.")]
@@ -220,41 +220,59 @@ namespace HugoCrossPoster
                 };
             }
 
-            if (!logOutputOnly.ToLower().Equals("true"))
+            // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
+            if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
             {
-                // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
-                if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
-                {
-                    // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
-                    _logger.LogInformation($"[Medium] Crossposting {filePath}...");
+                // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
+                _logger.LogInformation($"[Medium] Crossposting {filePath}...");
 
-                    //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
-                    await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                    _logger.LogInformation($"[Medium] Crossposting of {filePath} complete.");
-                }
-                else
+                if (logPayloadOutput.ToLower().Equals("true"))
                 {
-                    _logger.LogInformation($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
+                    _logger.LogInformation(JsonSerializer.Serialize(mediumPayload));
                 }
 
-                // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
-                if (!String.IsNullOrEmpty(devtoToken))
-                {
-                    // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
-                    _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
+                //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
+                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                _logger.LogInformation($"[Medium] Crossposting of {filePath} complete.");
 
-                    //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
-                    await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                    _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");
-                }
-                else
-                {
-                    _logger.LogInformation($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
-                }
-            } else
+            }
+            else
             {
-                _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
-                _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
+                _logger.LogInformation($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
+                
+                if (logPayloadOutput.ToLower().Equals("true"))
+                {
+                    _logger.LogInformation(JsonSerializer.Serialize(mediumPayload));
+                }
+            }
+
+            // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
+            if (!String.IsNullOrEmpty(devtoToken))
+            {
+                // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
+                _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
+
+                
+                if (logPayloadOutput.ToLower().Equals("true"))
+                {
+                    _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
+                }
+
+                //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
+                await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");
+
+                
+            }
+            else
+            {
+                _logger.LogInformation($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
+
+                if (logPayloadOutput.ToLower().Equals("true"))
+                {
+                    _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
+                }
+
             }
         }
     }
