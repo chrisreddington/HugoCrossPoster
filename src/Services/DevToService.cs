@@ -126,5 +126,6 @@ namespace HugoCrossPoster.Services
       public string series {get; set;}
       public string canonical_url {get; set;}
       public string description {get; set;}
+      public int organization_id { get; set; } = 0;
     }
 }

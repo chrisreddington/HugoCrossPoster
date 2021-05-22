@@ -120,7 +120,11 @@ namespace HugoCrossPoster
         /// <value>DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.</value>
         [Option(ShortName = "d", Description = "DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.")]
         public string devtoToken { get; }
-        
+
+        /// <value>DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.</value>
+        [Option(ShortName = "g", Description = "DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.")]
+        public string devtoOrganization { get; }
+
         /// <value>Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.</value>
         [Option(ShortName = "a", Description = "Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.")]
         public string mediumAuthorId { get; }
@@ -236,24 +240,8 @@ namespace HugoCrossPoster
 
                 case ThirdPartyService.DevTo:
                     // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-                    if (series.Count > 0)
-                    {
-                        payload = new DevToPoco()
-                        {
-                            article = new Article()
-                            {
-                                title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                                body_markdown = contentWithoutFrontMatter,
-                                canonical_url = canonicalUrl,
-                                tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
-                                description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
-                                series = series[0]
-                            }
-                        };
-                    }
-                    else
-                    {
-                        payload = new DevToPoco()
+
+                    payload = new DevToPoco()
                         {
                             article = new Article()
                             {
@@ -264,7 +252,18 @@ namespace HugoCrossPoster
                                 description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description")
                             }
                         };
+
+                    if (series.Count > 0){
+                        (payload as DevToPoco).article.series = series[0];
                     }
+
+                    int organization_id;
+                    
+                    if (int.TryParse(devtoOrganization, out organization_id)){
+                        (payload as DevToPoco).article.organization_id = organization_id;
+                    }
+
+
                 break;
                 default:
                     payload = new DevToPoco();
