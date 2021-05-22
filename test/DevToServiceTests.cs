@@ -267,6 +267,22 @@ namespace HugoCrossPoster.Tests
              (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
         }
 
+
+        [Fact]
+        public async Task VerifyTweetContentConvertedSuccessfully()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234\n{{< tweet 1395779887412170752 >}}";
+            string expectedContent = "#Hello\n* world\n* 1234\n{% twitter 1395779887412170752 %}";
+
+            // Act
+            DevToService mediumService = new DevToService(mockFactory.Object, mockLogger.Object);
+            string actualContent = await mediumService.ReplaceEmbeddedTweets(originalContent);
+
+            // Assert
+            Assert.Equal(expectedContent, actualContent);
+        }
+
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()
         {
             return HttpPolicyExtensions

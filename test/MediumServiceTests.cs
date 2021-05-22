@@ -165,6 +165,21 @@ namespace HugoCrossPoster.Tests
         }
 
         [Fact]
+        public async Task VerifyTweetContentConvertedSuccessfully()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234\n{{< tweet 1395779887412170752 >}}";
+            string expectedContent = "#Hello\n* world\n* 1234\nhttps://twitter.com/username/status/1395779887412170752";
+
+            // Act
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
+            string actualContent = await mediumService.ReplaceEmbeddedTweets(originalContent);
+
+            // Assert
+            Assert.Equal(expectedContent, actualContent);
+        }
+
+        [Fact]
         public async Task VerifyNoChangeIfEmptyYouTubePropertySpecified()
         {
             // Arrange
