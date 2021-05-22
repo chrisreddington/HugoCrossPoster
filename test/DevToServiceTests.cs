@@ -71,11 +71,12 @@ namespace HugoCrossPoster.Tests
                     title = "Descriptive Title"
                 }
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object.Token);
             });
 
             // Assert
@@ -131,13 +132,14 @@ namespace HugoCrossPoster.Tests
                     title = "Descriptive Title"
                 }
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             try
             {
                 await GetRetryPolicyAsync().WrapAsync(GetCircuitBreakerPolicyAsync()).ExecuteAsync(async () =>
                 {
-                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object.Token);
                 });
             }
             catch (BrokenCircuitException ex)

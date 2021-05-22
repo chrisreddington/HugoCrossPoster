@@ -62,11 +62,12 @@ namespace HugoCrossPoster.Tests
                 tags = new List<string>() { "DevOps", "GitHub" },
                 title = "Descriptive Title"
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", "myAuthorId");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object.Token, "myAuthorId");
             });
 
             // Assert
@@ -113,11 +114,12 @@ namespace HugoCrossPoster.Tests
                 tags = new List<string>() { "DevOps", "GitHub" },
                 title = "Descriptive Title"
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", "myAuthorId");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object.Token, "myAuthorId");
             });
 
             // Assert
