@@ -173,18 +173,14 @@ namespace HugoCrossPoster
         {
             CancellationTokenSource cts = new CancellationTokenSource();
             List<Task> listOfTasks = new List<Task>();
-            try
+            for (int i = 0; i  < matchedFiles.Count; i++)
             {
-                for (int i = 0; i  < matchedFiles.Count; i++)
-                {
-                    listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i], thirdPartyService, cts.Token));
-                }
-
-                await Task.WhenAll(listOfTasks);
-            } catch (UnauthorizedResponseException ex)
-            {
-                cts.Cancel();
+                listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i], thirdPartyService, cts));
+                Thread.Sleep(50);
             }
+
+            await Task.WhenAll(listOfTasks);
+        
             cts.Dispose();
         }
 
@@ -192,7 +188,7 @@ namespace HugoCrossPoster
         /// The ConvertAndPostAsync is executed on an individual file. It reads the file, processes it by removing localURLs and pulling the required frontmatter out of the document. This is then added to an appropriate POCO, either for Medium or for DevTo. As a future exercise, could investigate making this POCO agnostic of the third party service.
         /// </summary>
          /// <param name="filePath">File Path of the file to be processed.</param>
-        async Task ConvertAndPostAsync(string filePath, ThirdPartyService thirdPartyService, CancellationToken cancellationToken)
+        async Task ConvertAndPostAsync(string filePath, ThirdPartyService thirdPartyService, CancellationTokenSource cts)
         {
             //cancellationToken.Register(() => throw new Exception ("Help"));
             /*if (cancellationToken.IsCancellationRequested)
@@ -280,26 +276,39 @@ namespace HugoCrossPoster
 
             try 
             {
-                if (!cancellationToken.IsCancellationRequested)
+                HttpResponseMessage responseMessage = new HttpResponseMessage()
                 {
+                    StatusCode = System.Net.HttpStatusCode.NotFound
+                };
+
+                if (!cts.Token.IsCancellationRequested)
+                {
+
                     switch (thirdPartyService)
                     {
                         case ThirdPartyService.Medium:  
-                            await _mediumService.CreatePostAsync(payload as MediumPoco, mediumToken, cancellationToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                            responseMessage = await _mediumService.CreatePostAsync(payload as MediumPoco, mediumToken, cts, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
                         break;
 
                         case ThirdPartyService.DevTo:
-                            await _devToService.CreatePostAsync(payload as DevToPoco, devtoToken, cancellationToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                            responseMessage = await _devToService.CreatePostAsync(payload as DevToPoco, devtoToken, cts, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
                         break;
                         default:
-                            payload = new DevToPoco();
                         break;
                     }
                 }
-            _logger.LogInformation($"[{thirdPartyService.ToString()}] Crossposting of {filePath} complete.");
+
+                if (responseMessage.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation($"[{thirdPartyService.ToString()}] Crossposting of {filePath} complete.");
+                } else {
+                    _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
+
+                }
+
             } catch (UnauthorizedResponseException ex)
             {
-                throw new UnauthorizedResponseException();
+                _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
             }
         }
     }

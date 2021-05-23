@@ -44,7 +44,7 @@ namespace HugoCrossPoster.Services
       /// <param name="integrationToken">Integration Token which is used to authorize to the dev.to api. A user can obtain this through their user settings on dev.to.</param>
       /// <param name="authorId">This is defaulted to null and is unrequired for the dev.to service. It is not used within the implementation.</param>
       /// <param name="youtube">This is an optional parameter, representing a YouTube Video ID. If the article was originally a YouTube video (e.g.a podcast episode with a video on YouTube), then this should be populated. This is used to automatically append the appropriate liquid tag to the Dev.To article with the YouTube video ID.</param>
-      public async Task<HttpResponseMessage> CreatePostAsync(DevToPoco articleObject, string integrationToken, CancellationToken cancellationToken, string authorId = null, string youtube = null)
+      public async Task<HttpResponseMessage> CreatePostAsync(DevToPoco articleObject, string integrationToken, CancellationTokenSource cts = default, string authorId = null, string youtube = null)
       {
 
         // If there is a youtube parameter, add it to the end of the content with a liquid tag.
@@ -65,11 +65,12 @@ namespace HugoCrossPoster.Services
         // Post the article object to the dev.to API by serializing the object to JSON.
         // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
         try {
-          var postResponse = await client.PostAsJsonAsync(uri, articleObject);
+          var postResponse = await client.PostAsJsonAsync(uri, articleObject, cts.Token);
           return postResponse.EnsureSuccessStatusCode();
         } catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogError("[DevTo] Unauthorized Response from Dev.To. Throwing exception to cancel remaining tasks.");
+            _logger.LogError("[DevTo] Unauthorized Response from Dev.To. Cancelling...");
+            cts.Cancel();
             throw new UnauthorizedResponseException();
         }
 
