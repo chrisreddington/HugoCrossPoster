@@ -67,7 +67,7 @@ namespace HugoCrossPoster.Tests
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object.Token, "myAuthorId");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object, "myAuthorId");
             });
 
             // Assert
@@ -119,7 +119,7 @@ namespace HugoCrossPoster.Tests
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object.Token, "myAuthorId");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object, "myAuthorId");
             });
 
             // Assert

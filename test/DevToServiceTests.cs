@@ -76,7 +76,7 @@ namespace HugoCrossPoster.Tests
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object.Token);
+                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object);
             });
 
             // Assert
@@ -139,7 +139,7 @@ namespace HugoCrossPoster.Tests
             {
                 await GetRetryPolicyAsync().WrapAsync(GetCircuitBreakerPolicyAsync()).ExecuteAsync(async () =>
                 {
-                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object.Token);
+                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object);
                 });
             }
             catch (BrokenCircuitException ex)
