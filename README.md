@@ -61,6 +61,10 @@ This software is a pet side-project and currently in active development. It is t
     # DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.
     # This is not a required property.
     devtoToken: ''
+    
+    # DevTo Organization. If you are posting as a user and want to associate the post with an organization, enter the organization ID (not username) here.
+    # This is not a required property.
+    devToOrganization: ''
 
     # Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.
     # This is not a required property.

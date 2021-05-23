@@ -39,7 +39,7 @@ inputs:
     required: false
   devtoOrganization:
     description:
-      'DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.'
+      'DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization ID (not username) here.'
     required: false
   mediumAuthorId:
     description:

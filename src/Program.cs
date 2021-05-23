@@ -122,7 +122,7 @@ namespace HugoCrossPoster
         public string devtoToken { get; }
 
         /// <value>DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.</value>
-        [Option(ShortName = "g", Description = "DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.")]
+        [Option(ShortName = "g", Description = "DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization ID (not username) here.")]
         public string devtoOrganization { get; }
 
         /// <value>Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.</value>
