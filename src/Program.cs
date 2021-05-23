@@ -137,8 +137,6 @@ namespace HugoCrossPoster
         [Option(ShortName = "p", Description = "Protocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.")]
         public string protocol { get; } = "https";
 
-        static readonly CancellationTokenSource s_cts = new CancellationTokenSource();
-
 
         /// <summary>
         /// The OnExecute method contains the primary program logic. It gathers a list of files (based upon the input parameters), and then adds to them to a List of tasks to be processed asynchronously.
@@ -190,11 +188,6 @@ namespace HugoCrossPoster
          /// <param name="filePath">File Path of the file to be processed.</param>
         async Task ConvertAndPostAsync(string filePath, ThirdPartyService thirdPartyService, CancellationTokenSource cts)
         {
-            //cancellationToken.Register(() => throw new Exception ("Help"));
-            /*if (cancellationToken.IsCancellationRequested)
-            {
-                _logger.LogWarning($"[{thirdPartyService.ToString()}] Cancellation has been requested, no longer processing.");
-            }*/
             // Obtain the filename without the directoryPath, so that it can be used for the canonical URL details later on.
             string canonicalPath = filePath.Replace($"{directoryPath}\\", "");
             _logger.LogInformation($"[Loop] Processing ${filePath}");
@@ -305,8 +298,7 @@ namespace HugoCrossPoster
                     _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
 
                 }
-
-            } catch (UnauthorizedResponseException ex)
+            } catch (UnauthorizedResponseException)
             {
                 _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
             }

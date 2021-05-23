@@ -73,7 +73,6 @@ namespace HugoCrossPoster.Services
             // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
             try
             {
-                //cancellationToken.ThrowIfCancellationRequested();
                 var postResponse = await client.PostAsJsonAsync(uri, articleObject, cts.Token);
                 return postResponse.EnsureSuccessStatusCode();
             }

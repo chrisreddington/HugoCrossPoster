@@ -73,8 +73,6 @@ namespace HugoCrossPoster.Services
             cts.Cancel();
             throw new UnauthorizedResponseException();
         }
-
-        return new HttpResponseMessage();
       }
 
         /// <summary>
