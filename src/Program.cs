@@ -144,7 +144,7 @@ namespace HugoCrossPoster
         async Task<int> OnExecute()
         {
             List<string> matchedFiles = (await _markdownService.listFiles(directoryPath, searchPattern, recursiveSubdirectories.ToLower() == "true")).ToList();
-            List<Task> OrchestrationTaskList = new List<Task>();
+            List<Task<ProcessedResultsCollection>> OrchestrationTaskList = new List<Task<ProcessedResultsCollection>>();
 
             // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
             if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
@@ -162,31 +162,67 @@ namespace HugoCrossPoster
                 _logger.LogInformation($"[{ThirdPartyService.DevTo.ToString()}] Missing required parameters to crosspost to this platform.");
             }
 
-            await Task.WhenAll(OrchestrationTaskList);
+            ProcessedResultsCollection[] _resultsCollectionArray = null;
 
-            return await Task.Run(() => 0);
+            try {
+                _resultsCollectionArray = await Task.WhenAll(OrchestrationTaskList);                
+            }
+            catch (Exception ex){
+                _logger.LogInformation($"[Program] Uh-oh... We weren't expecting an exception here {ex.Message}");
+            }
+
+            List<ProcessedResultsCollection> _results = _resultsCollectionArray.ToList();
+
+            foreach (ProcessedResultsCollection collection in _results)
+            {
+                List<ProcessedResultObject> unprocessableItems = collection.results.Where(x => x.result == Result.Unprocessable).ToList();
+                _logger.LogInformation($"[{collection.service.ToString()}] Summary from {collection.results.Count} items");
+                _logger.LogInformation($"Success: {collection.results.Where(x => x.result == Result.Success).Count()}");
+                _logger.LogInformation($"Unauthorized: {collection.results.Where(x => x.result == Result.Unauthorized).Count()}");
+                _logger.LogInformation($"Unprocessable: {collection.results.Where(x => x.result == Result.Unprocessable).Count()}");
+
+                _logger.LogInformation("The following items are the unprocessable objects, represented in JSON:");
+                foreach (ProcessedResultObject unprocessableItem in unprocessableItems)
+                {
+                    _logger.LogInformation(unprocessableItem.jsonObject);
+                }
+            }
+
+
+            return 0;
         }
 
-        async Task Orchestrate(List<string> matchedFiles, ThirdPartyService thirdPartyService)
+        async Task<ProcessedResultsCollection> Orchestrate(List<string> matchedFiles, ThirdPartyService thirdPartyService)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
-            List<Task> listOfTasks = new List<Task>();
+            List<Task<ProcessedResultObject>> listOfTasks = new List<Task<ProcessedResultObject>>();
             for (int i = 0; i  < matchedFiles.Count; i++)
             {
                 listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i], thirdPartyService, cts));
                 Thread.Sleep(50);
             }
 
-            await Task.WhenAll(listOfTasks);
+
+
+            ProcessedResultObject[] resultArray = await Task.WhenAll(listOfTasks);
+            List<ProcessedResultObject> _results = resultArray.ToList();
+
+            ProcessedResultsCollection resultsCollection = new ProcessedResultsCollection()
+            {
+                service = thirdPartyService,
+                results = _results
+            };
         
-            cts.Dispose();
+            //cts.Dispose();
+
+            return resultsCollection;
         }
 
         /// <summary>
         /// The ConvertAndPostAsync is executed on an individual file. It reads the file, processes it by removing localURLs and pulling the required frontmatter out of the document. This is then added to an appropriate POCO, either for Medium or for DevTo. As a future exercise, could investigate making this POCO agnostic of the third party service.
         /// </summary>
          /// <param name="filePath">File Path of the file to be processed.</param>
-        async Task ConvertAndPostAsync(string filePath, ThirdPartyService thirdPartyService, CancellationTokenSource cts)
+        async Task<ProcessedResultObject> ConvertAndPostAsync(string filePath, ThirdPartyService thirdPartyService, CancellationTokenSource cts)
         {
             // Obtain the filename without the directoryPath, so that it can be used for the canonical URL details later on.
             string canonicalPath = filePath.Replace($"{directoryPath}\\", "");
@@ -252,7 +288,6 @@ namespace HugoCrossPoster
                         (payload as DevToPoco).article.organization_id = organization_id;
                     }
 
-
                 break;
                 default:
                     payload = new DevToPoco();
@@ -294,13 +329,36 @@ namespace HugoCrossPoster
                 if (responseMessage.IsSuccessStatusCode)
                 {
                     _logger.LogInformation($"[{thirdPartyService.ToString()}] Crossposting of {filePath} complete.");
+                    return new ProcessedResultObject()
+                    {
+                        result = Result.Success
+                    };
+
                 } else {
                     _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
 
+                    return new ProcessedResultObject()
+                    {
+                        result = Result.Unauthorized
+                    };
                 }
             } catch (UnauthorizedResponseException)
             {
                 _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
+
+                return new ProcessedResultObject()
+                {
+                    result = Result.Unauthorized
+                };
+            } catch (UnprocessableEntityException ex)
+            {
+                _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} failed, as entity could not be processed.");
+
+                return new ProcessedResultObject()
+                {
+                    result = Result.Unprocessable,
+                    jsonObject = ex.Message
+                };
             }
         }
     }

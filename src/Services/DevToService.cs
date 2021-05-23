@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,7 +64,6 @@ namespace HugoCrossPoster.Services
         client.DefaultRequestHeaders.Add("api-key", $"{integrationToken}");
 
         // Post the article object to the dev.to API by serializing the object to JSON.
-        // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
         try {
           var postResponse = await client.PostAsJsonAsync(uri, articleObject, cts.Token);
           return postResponse.EnsureSuccessStatusCode();
@@ -72,6 +72,11 @@ namespace HugoCrossPoster.Services
             _logger.LogError("[DevTo] Unauthorized Response from Dev.To. Cancelling...");
             cts.Cancel();
             throw new UnauthorizedResponseException();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.UnprocessableEntity)
+        {
+            _logger.LogInformation(JsonSerializer.Serialize(articleObject));
+                throw new UnprocessableEntityException(JsonSerializer.Serialize(articleObject));
         }
       }
 
