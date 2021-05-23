@@ -12,6 +12,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
+using HugoCrossPoster.Classes;
 
 namespace HugoCrossPoster
 {
@@ -118,7 +120,11 @@ namespace HugoCrossPoster
         /// <value>DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.</value>
         [Option(ShortName = "d", Description = "DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.")]
         public string devtoToken { get; }
-        
+
+        /// <value>DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.</value>
+        [Option(ShortName = "g", Description = "DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.")]
+        public string devtoOrganization { get; }
+
         /// <value>Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.</value>
         [Option(ShortName = "a", Description = "Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.")]
         public string mediumAuthorId { get; }
@@ -131,29 +137,56 @@ namespace HugoCrossPoster
         [Option(ShortName = "p", Description = "Protocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.")]
         public string protocol { get; } = "https";
 
+
         /// <summary>
         /// The OnExecute method contains the primary program logic. It gathers a list of files (based upon the input parameters), and then adds to them to a List of tasks to be processed asynchronously.
         /// </summary>
         async Task<int> OnExecute()
         {
             List<string> matchedFiles = (await _markdownService.listFiles(directoryPath, searchPattern, recursiveSubdirectories.ToLower() == "true")).ToList();
+            List<Task> OrchestrationTaskList = new List<Task>();
 
+            // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
+            if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
+            {
+                OrchestrationTaskList.Add(Orchestrate(matchedFiles, ThirdPartyService.Medium));
+            } else {
+                _logger.LogInformation($"[{ThirdPartyService.Medium.ToString()}] Missing required parameters to crosspost to this platform.");
+            }
+
+            // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
+            if (!String.IsNullOrEmpty(devtoToken))
+            {
+                OrchestrationTaskList.Add(Orchestrate(matchedFiles, ThirdPartyService.DevTo));
+            } else {
+                _logger.LogInformation($"[{ThirdPartyService.DevTo.ToString()}] Missing required parameters to crosspost to this platform.");
+            }
+
+            await Task.WhenAll(OrchestrationTaskList);
+
+            return await Task.Run(() => 0);
+        }
+
+        async Task Orchestrate(List<string> matchedFiles, ThirdPartyService thirdPartyService)
+        {
+            CancellationTokenSource cts = new CancellationTokenSource();
             List<Task> listOfTasks = new List<Task>();
             for (int i = 0; i  < matchedFiles.Count; i++)
             {
-                listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i]));
+                listOfTasks.Add(ConvertAndPostAsync(matchedFiles[i], thirdPartyService, cts));
+                Thread.Sleep(50);
             }
 
             await Task.WhenAll(listOfTasks);
-
-            return await Task.Run(() => 0);
+        
+            cts.Dispose();
         }
 
         /// <summary>
         /// The ConvertAndPostAsync is executed on an individual file. It reads the file, processes it by removing localURLs and pulling the required frontmatter out of the document. This is then added to an appropriate POCO, either for Medium or for DevTo. As a future exercise, could investigate making this POCO agnostic of the third party service.
         /// </summary>
          /// <param name="filePath">File Path of the file to be processed.</param>
-        async Task ConvertAndPostAsync(string filePath)
+        async Task ConvertAndPostAsync(string filePath, ThirdPartyService thirdPartyService, CancellationTokenSource cts)
         {
             // Obtain the filename without the directoryPath, so that it can be used for the canonical URL details later on.
             string canonicalPath = filePath.Replace($"{directoryPath}\\", "");
@@ -170,109 +203,104 @@ namespace HugoCrossPoster
             string publishedDate = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "PublishDate");
             string canonicalUrl = await _markdownService.getCanonicalUrl(protocol, baseUrl, canonicalPath);
 
+            
+            List<string> series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1));
+
             // If required, prepend the original post information.
             /*if (originalPostInformation && !string.IsNullOrEmpty(publishedDate))
             {
                 contentWithoutFrontMatter = await _markdownService.prependOriginalPostSnippet(contentWithoutFrontMatter, DateTime.ParseExact(publishedDate, "yyyy-MM-dd HH:mm:ss", null), canonicalUrl);
             }*/
 
+            IThirdPartyBlogPoco payload;
 
-            // Initialise the MediumPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-            MediumPoco mediumPayload = new MediumPoco()
+            switch (thirdPartyService)
             {
-                title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                content = contentWithoutFrontMatter,
-                canonicalUrl = canonicalUrl,
-                tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags")
-            };
-
-            List<string> series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1));
-            DevToPoco devToPayload;
-
-            // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
-            if (series.Count > 0)
-            {
-                devToPayload = new DevToPoco()
-                {
-                    article = new Article()
+                case ThirdPartyService.Medium:                
+                    // Initialise the MediumPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
+                    payload = new MediumPoco()
                     {
                         title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                        body_markdown = contentWithoutFrontMatter,
-                        canonical_url = canonicalUrl,
-                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
-                        description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description"),
-                        series = series[0]
+                        content = contentWithoutFrontMatter,
+                        canonicalUrl = canonicalUrl,
+                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags")
+                    };
+                break;
+
+                case ThirdPartyService.DevTo:
+                    // Initialise the DevToPOCO by using several MarkDown Service methods, including getCanonicalURL, getFrontMatterProperty and getFrontMatterPropertyList.
+
+                    payload = new DevToPoco()
+                        {
+                            article = new Article()
+                            {
+                                title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
+                                body_markdown = contentWithoutFrontMatter,
+                                canonical_url = canonicalUrl,
+                                tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
+                                description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description")
+                            }
+                        };
+
+                    if (series.Count > 0){
+                        (payload as DevToPoco).article.series = series[0];
                     }
-                };
+
+                    int organization_id;
+                    
+                    if (int.TryParse(devtoOrganization, out organization_id)){
+                        (payload as DevToPoco).article.organization_id = organization_id;
+                    }
+
+
+                break;
+                default:
+                    payload = new DevToPoco();
+                break;
             }
-            else
+
+            // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
+            _logger.LogInformation($"[{thirdPartyService.ToString()}] Crossposting {filePath}...");
+
+            if (logPayloadOutput.ToLower().Equals("true"))
             {
-                devToPayload = new DevToPoco()
+                _logger.LogInformation($"[{thirdPartyService.ToString()}] {JsonSerializer.Serialize(payload, payload.GetType())}");
+            }
+
+            try 
+            {
+                HttpResponseMessage responseMessage = new HttpResponseMessage()
                 {
-                    article = new Article()
+                    StatusCode = System.Net.HttpStatusCode.NotFound
+                };
+
+                if (!cts.Token.IsCancellationRequested)
+                {
+
+                    switch (thirdPartyService)
                     {
-                        title = await _markdownService.getFrontmatterProperty(sourceFile, "title"),
-                        body_markdown = contentWithoutFrontMatter,
-                        canonical_url = canonicalUrl,
-                        tags = await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "tags", 4, true),
-                        description = await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "description")
+                        case ThirdPartyService.Medium:  
+                            responseMessage = await _mediumService.CreatePostAsync(payload as MediumPoco, mediumToken, cts, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                        break;
+
+                        case ThirdPartyService.DevTo:
+                            responseMessage = await _devToService.CreatePostAsync(payload as DevToPoco, devtoToken, cts, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
+                        break;
+                        default:
+                        break;
                     }
-                };
-            }
-
-            // If either the mediumAuthorId or mediumToken are not completed, skip this step, as we don't have all of the needed details to call to the API.
-            if (!(String.IsNullOrEmpty(mediumAuthorId) || String.IsNullOrEmpty(mediumToken)))
-            {
-                // If we were successful, it means we have both pieces of information and should be able to authenticate to Medium.
-                _logger.LogInformation($"[Medium] Crossposting {filePath}...");
-
-                if (logPayloadOutput.ToLower().Equals("true"))
-                {
-                    _logger.LogInformation(JsonSerializer.Serialize(mediumPayload));
                 }
 
-                //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
-                await _mediumService.CreatePostAsync(mediumPayload, mediumToken, mediumAuthorId, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                _logger.LogInformation($"[Medium] Crossposting of {filePath} complete.");
-
-            }
-            else
-            {
-                _logger.LogInformation($"[Medium] Missing required parameters to crosspost {filePath}. Skipping.");
-                
-                if (logPayloadOutput.ToLower().Equals("true"))
+                if (responseMessage.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation(JsonSerializer.Serialize(mediumPayload));
-                }
-            }
+                    _logger.LogInformation($"[{thirdPartyService.ToString()}] Crossposting of {filePath} complete.");
+                } else {
+                    _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
 
-            // If the devtoToken is not available, skip this step, as we don't have the needed details to call to the API.
-            if (!String.IsNullOrEmpty(devtoToken))
+                }
+            } catch (UnauthorizedResponseException)
             {
-                // If we were successful, it means we have both pieces of information and should be able to authenticate to DevTo if the credentials are correct.
-                _logger.LogInformation($"[DevTo] Crossposting {filePath}...");
-
-                
-                if (logPayloadOutput.ToLower().Equals("true"))
-                {
-                    _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
-                }
-
-                //TODO: Add some logic to handle bad authorization. If we detect one, we should cancel the loop as all will fail.
-                await _devToService.CreatePostAsync(devToPayload, devtoToken, null, await _markdownService.getFrontmatterProperty(contentWithFrontMatter, "youtube"));
-                _logger.LogInformation($"[DevTo] Crosspost of {filePath} complete.");
-
-                
-            }
-            else
-            {
-                _logger.LogInformation($"[DevTo] Missing required parameter to crosspost {filePath}. Skipping.");
-
-                if (logPayloadOutput.ToLower().Equals("true"))
-                {
-                    _logger.LogInformation(JsonSerializer.Serialize(devToPayload));
-                }
-
+                _logger.LogWarning($"[{thirdPartyService.ToString()}] Crossposting of {filePath} cancelled. A previous response was received as Unauthorized, so all operations have been cancelled for this third party service. Please confirm your authentication details are correct for this Third Party Service.");
             }
         }
     }

@@ -62,11 +62,12 @@ namespace HugoCrossPoster.Tests
                 tags = new List<string>() { "DevOps", "GitHub" },
                 title = "Descriptive Title"
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", "myAuthorId");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object, "myAuthorId");
             });
 
             // Assert
@@ -113,11 +114,12 @@ namespace HugoCrossPoster.Tests
                 tags = new List<string>() { "DevOps", "GitHub" },
                 title = "Descriptive Title"
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", "myAuthorId");
+                return await mediumService.CreatePostAsync(mediumPoco, "integrationToken", mockCancellationTokenSource.Object, "myAuthorId");
             });
 
             // Assert
@@ -160,6 +162,21 @@ namespace HugoCrossPoster.Tests
              It.Is<It.IsAnyType>((v, t) => state(v, t)),
              It.IsAny<Exception>(),
              (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task VerifyTweetContentConvertedSuccessfully()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234\n{{< tweet 1395779887412170752 >}}";
+            string expectedContent = "#Hello\n* world\n* 1234\nhttps://twitter.com/username/status/1395779887412170752";
+
+            // Act
+            MediumService mediumService = new MediumService(mockFactory.Object, mockLogger.Object);
+            string actualContent = await mediumService.ReplaceEmbeddedTweets(originalContent);
+
+            // Assert
+            Assert.Equal(expectedContent, actualContent);
         }
 
         [Fact]

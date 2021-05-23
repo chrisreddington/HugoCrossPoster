@@ -37,6 +37,10 @@ inputs:
     description:
       'DevTo Integration Token. This is required if crossposting to DevTo, as it forms part of the URL for the API Call.'
     required: false
+  devtoOrganization:
+    description:
+      'DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization name here.'
+    required: false
   mediumAuthorId:
     description:
       'Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.'
@@ -67,6 +71,8 @@ runs:
   - "${{ inputs.baseUrl }}"
   - "-d"
   - "${{ inputs.devtoToken }}"
+  - "-g"
+  - "${{ inputs.devtoOrganization }}"
   - "-a"
   - "${{ inputs.mediumAuthorId }}"
   - "-i"

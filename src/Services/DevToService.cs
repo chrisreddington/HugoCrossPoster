@@ -1,9 +1,12 @@
+using HugoCrossPoster.Classes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HugoCrossPoster.Services
@@ -41,7 +44,7 @@ namespace HugoCrossPoster.Services
       /// <param name="integrationToken">Integration Token which is used to authorize to the dev.to api. A user can obtain this through their user settings on dev.to.</param>
       /// <param name="authorId">This is defaulted to null and is unrequired for the dev.to service. It is not used within the implementation.</param>
       /// <param name="youtube">This is an optional parameter, representing a YouTube Video ID. If the article was originally a YouTube video (e.g.a podcast episode with a video on YouTube), then this should be populated. This is used to automatically append the appropriate liquid tag to the Dev.To article with the YouTube video ID.</param>
-      public async Task<HttpResponseMessage> CreatePostAsync(DevToPoco articleObject, string integrationToken, string authorId = null, string youtube = null)
+      public async Task<HttpResponseMessage> CreatePostAsync(DevToPoco articleObject, string integrationToken, CancellationTokenSource cts = default, string authorId = null, string youtube = null)
       {
 
         // If there is a youtube parameter, add it to the end of the content with a liquid tag.
@@ -61,9 +64,16 @@ namespace HugoCrossPoster.Services
 
         // Post the article object to the dev.to API by serializing the object to JSON.
         // TODO: Review approach to logging out success/failure, particularly for unprocessable_entity items.
-        var postResponse = await client.PostAsJsonAsync(uri, articleObject);
-        return await Task.Run(() => postResponse.EnsureSuccessStatusCode());
+        try {
+          var postResponse = await client.PostAsJsonAsync(uri, articleObject, cts.Token);
+          return postResponse.EnsureSuccessStatusCode();
+        } catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            _logger.LogError("[DevTo] Unauthorized Response from Dev.To. Cancelling...");
+            cts.Cancel();
+            throw new UnauthorizedResponseException();
         }
+      }
 
         /// <summary>
         /// Method to take an ID of a YouTube video and convert it into the appropriate format for DevTo
@@ -101,7 +111,7 @@ namespace HugoCrossPoster.Services
         }
     }
 
-    public class DevToPoco
+    public class DevToPoco : IThirdPartyBlogPoco
     {
       public Article article {get; set;}
     }
@@ -115,5 +125,6 @@ namespace HugoCrossPoster.Services
       public string series {get; set;}
       public string canonical_url {get; set;}
       public string description {get; set;}
+      public int organization_id { get; set; } = 0;
     }
 }

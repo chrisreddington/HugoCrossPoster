@@ -71,11 +71,12 @@ namespace HugoCrossPoster.Tests
                     title = "Descriptive Title"
                 }
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             await GetRetryPolicyAsync().ExecuteAsync(async () =>
             {
-                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object);
             });
 
             // Assert
@@ -131,13 +132,14 @@ namespace HugoCrossPoster.Tests
                     title = "Descriptive Title"
                 }
             };
+            Mock<CancellationTokenSource> mockCancellationTokenSource = new Mock<CancellationTokenSource>();
 
             // Act
             try
             {
                 await GetRetryPolicyAsync().WrapAsync(GetCircuitBreakerPolicyAsync()).ExecuteAsync(async () =>
                 {
-                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken");
+                    return await devtoService.CreatePostAsync(devtoPoco, "integrationToken", mockCancellationTokenSource.Object);
                 });
             }
             catch (BrokenCircuitException ex)
@@ -263,6 +265,22 @@ namespace HugoCrossPoster.Tests
              It.Is<It.IsAnyType>((v, t) => state(v, t)),
              It.IsAny<Exception>(),
              (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(1));
+        }
+
+
+        [Fact]
+        public async Task VerifyTweetContentConvertedSuccessfully()
+        {
+            // Arrange
+            string originalContent = "#Hello\n* world\n* 1234\n{{< tweet 1395779887412170752 >}}";
+            string expectedContent = "#Hello\n* world\n* 1234\n{% twitter 1395779887412170752 %}";
+
+            // Act
+            DevToService mediumService = new DevToService(mockFactory.Object, mockLogger.Object);
+            string actualContent = await mediumService.ReplaceEmbeddedTweets(originalContent);
+
+            // Assert
+            Assert.Equal(expectedContent, actualContent);
         }
 
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicyAsync()
