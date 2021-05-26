@@ -2,7 +2,7 @@ using System;
 
 namespace HugoCrossPoster.Classes
 {
-    public interface IThirdPartyBlogPoco
-    {
-    }
+  public interface IThirdPartyBlogPoco
+  {
+  }
 }
