@@ -87,7 +87,8 @@ namespace HugoCrossPoster.Tests
             // Arrange
             string exampleMarkdownWithSymbols = @"key: 
             - cloudwithchris.com
-            - hybrid-cloud";
+            - hybrid-cloud
+            newproperty: here";
 
             // Act
             List<string> tags = await markdownService.getFrontMatterPropertyList(exampleMarkdownWithSymbols, "key");
@@ -143,6 +144,45 @@ namespace HugoCrossPoster.Tests
         {
             // Arrange
             string exampleMarkdownList = @"Title: My Cool Blog Title";
+
+            // Act
+            string value = await markdownService.getFrontmatterProperty(exampleMarkdownList, "title");
+
+            // Assert
+            await Task.Run(() => Assert.Equal("My Cool Blog Title", value));
+        }
+
+        [Fact]
+        public async Task AssetFrontMatterKeyValueCanHandleSingleQuotes()
+        {
+            // Arrange
+            string exampleMarkdownList = @"Title: 'My Cool Blog Title'";
+
+            // Act
+            string value = await markdownService.getFrontmatterProperty(exampleMarkdownList, "title");
+
+            // Assert
+            await Task.Run(() => Assert.Equal("My Cool Blog Title", value));
+        }
+
+        [Fact]
+        public async Task AssetFrontMatterKeyValueCanHandleNoQuotes()
+        {
+            // Arrange
+            string exampleMarkdownList = @"Title: My Cool Blog Title";
+
+            // Act
+            string value = await markdownService.getFrontmatterProperty(exampleMarkdownList, "title");
+
+            // Assert
+            await Task.Run(() => Assert.Equal("My Cool Blog Title", value));
+        }
+
+        [Fact]
+        public async Task AssetFrontMatterKeyValueCanHandleDoubleQuotes()
+        {
+            // Arrange
+            string exampleMarkdownList = @"Title: ""My Cool Blog Title""";
 
             // Act
             string value = await markdownService.getFrontmatterProperty(exampleMarkdownList, "title");
