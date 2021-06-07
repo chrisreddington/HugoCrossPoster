@@ -75,12 +75,13 @@ namespace HugoCrossPoster.Services
 
     public async Task<string> getFrontmatterProperty(string fileContents, string key)
     {
-      // Find the frontmatter with the Key 'key' in the YAML
-      string pattern = $@"{key}:\s*('?""?)(?<{key}>[-!$%^&*()_+|~=`{{}}\[\]:;'<>?,.\/\w."" ]+[^""'$])('?""?)";
-      Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase);
+      // Find the frontmatter with the Key( 'key' in the YAML
+      //string pattern = $@"{key}:\s*(""|'|)(?<{key}>[-!$%^&*()_+|~=`{{}}\[\]:;'<>?,.\/\w."" ]+[^""'])(""|'|)";
+      string pattern = $@"{key}:\s*(?<quote>'?""?)?(?<{key}>.+)\k<quote>";
+      Match match = Regex.Match(fileContents, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
       // Return the value of the <key> matched group
-      return await Task<string>.Run(() => match.Groups[key].Value);
+      return (await Task<string>.Run(() => match.Groups[key].Value)).Trim();
     }
 
 
@@ -141,7 +142,8 @@ namespace HugoCrossPoster.Services
       string originalPostSnippet = $"**This post was originally published on {publishDate.ToString("ddd, MMM, yyyy")} at [cloudwithchris.com]({canonicalUrl}).**\n\n";
 
       // Concatenate the two strings together.
-      return await Task<string>.Run(() => originalPostSnippet.Concat(fileContents).ToString());
+      return String.Concat(originalPostSnippet, fileContents);
+      //return await Task<string>.Run(() => originalPostSnippet.Concat(fileContents).ToString());
     }
 
   }

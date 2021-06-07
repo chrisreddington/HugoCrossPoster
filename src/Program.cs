@@ -124,13 +124,13 @@ namespace HugoCrossPoster
     [Option(ShortName = "g", Description = "DevTo Organization. This is not required. If you are posting as a user and want to associate the post with an organization, enter the organization ID (not username) here.")]
     public string devtoOrganization { get; }
 
-    /// <value>Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.</value>
-    [Option(ShortName = "a", Description = "Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.")]
-    public string mediumAuthorId { get; }
+        /// <value>Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.</value>
+        [Option(ShortName = "a", Description = "Medium Author ID. This is required if crossposting to medium, as it forms part of the URL for the API Call.")]
+        public string mediumAuthorId { get; }
 
-    /// <value>Medium Integration Token. This is required to authorize to the Medium API</value>
-    [Option(ShortName = "i", Description = "Medium Integration Token. This is required to authorize to the Medium API")]
-    public string mediumToken { get; }
+        /// <value>Medium Integration Token. This is required to authorize to the Medium API</value>
+        [Option(ShortName = "i", Description = "Medium Integration Token. This is required to authorize to the Medium API")]
+        public string mediumToken { get; }
 
     /// <value>Protocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.</value>
     [Option(ShortName = "p", Description = "Protocol used on the website. Options are either HTTP or HTTPS. This is used for converting any relative links to the original source, including the canonical URL.")]
@@ -248,10 +248,10 @@ namespace HugoCrossPoster
       List<string> series = (await _markdownService.getFrontMatterPropertyList(contentWithFrontMatter, "series", 1));
 
       // If required, prepend the original post information.
-      /*if (originalPostInformation && !string.IsNullOrEmpty(publishedDate))
+      if (originalPostInformation.ToLower().Equals("true") && !string.IsNullOrEmpty(publishedDate))
 			{
-				contentWithoutFrontMatter = await _markdownService.prependOriginalPostSnippet(contentWithoutFrontMatter, DateTime.ParseExact(publishedDate, "yyyy-MM-dd HH:mm:ss", null), canonicalUrl);
-			}*/
+				contentWithoutFrontMatter = await _markdownService.prependOriginalPostSnippet(contentWithoutFrontMatter, DateTime.ParseExact(publishedDate, "yyyy-MM-ddTHH:mm:ssZ", null), canonicalUrl);
+			}
 
       IThirdPartyBlogPoco payload;
 

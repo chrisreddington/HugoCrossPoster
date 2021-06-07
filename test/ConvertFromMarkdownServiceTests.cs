@@ -82,6 +82,39 @@ namespace HugoCrossPoster.Tests
         }
 
         [Fact]
+        public async Task AssertDateIsCorrectlyPickedOut()
+        {
+            // Arrange
+            string exampleMarkdownWithSymbols = @"Author: chrisreddington
+            Description:""At Microsoft Build 2021, Microsoft announced a series of updates relating to Cloud Native Applications anywhere. In summary, those updates refer to running Azure Services (such as App Services, Logic Apps, Azure Functions, Event Grid and API Management) in any Kubernetes cluster which is managed by Azure Arc. That means you could have Azure App Services running in Amazon Web Services (AWS), Google Cloud Platform (GCP), or in your on-premises Kubernetes deployment. This is a significant update, so I've decided that I'll be writing a series of blog posts on the topic - as one post would not do the topic justice!""
+            PublishDate: '2021-06-01T08:00:00Z'
+            image: img/cloudwithchrislogo.png
+            date: '2021-06-01T08:00:00Z'
+            images:
+            -img / cloudwithchrislogo.png
+            tags:
+            -Containers
+            - Developer
+            - Cloud Native
+            - Kubernetes
+            - Azure
+            - Azure Arc
+            series: 
+            -""Using Azure Arc for Apps""
+            title: Using Azure Arc for Apps - Part 1 - Setting up an Azure Arc enabled Kubernetes Cluster";
+
+            // Act
+            string date = await markdownService.getFrontmatterProperty(exampleMarkdownWithSymbols, "date");
+            string publishDate = await markdownService.getFrontmatterProperty(exampleMarkdownWithSymbols, "PublishDate");
+            string image = await markdownService.getFrontmatterProperty(exampleMarkdownWithSymbols, "image");
+
+            // Assert
+            await Task.Run(() => Assert.Equal("2021-06-01T08:00:00Z", date));
+            await Task.Run(() => Assert.Equal("2021-06-01T08:00:00Z", publishDate));
+            await Task.Run(() => Assert.Equal("img/cloudwithchrislogo.png", image));
+        }
+
+        [Fact]
         public async Task AssertRegExWorksWhenThereAreSpecialSymbolsInName()
         {
             // Arrange
